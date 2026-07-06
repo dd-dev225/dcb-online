@@ -1,0 +1,69 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Définir les objectifs{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-sliders-h mr-2 text-primary"></i>Définir les objectifs</h1>
+        <a href="{% url 'dashboards:objectifs' %}" class="btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm mr-1"></i>Retour
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Ajouter / mettre à jour un objectif</h6></div>
+        <div class="card-body">
+            <form method="post" class="form-row align-items-end">
+                {% csrf_token %}
+                <div class="form-group col-md-4">
+                    <label>Entité</label>
+                    <select name="entite" class="form-control" required>
+                        {% for e in entites %}<option value="{{ e.pk }}">{{ e.libelle }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label>Indicateur</label>
+                    <select name="indicateur" class="form-control" required>
+                        {% for code, libelle in indicateurs %}<option value="{{ code }}">{{ libelle }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <label>Cible</label>
+                    <input type="number" step="0.01" name="valeur_cible" class="form-control" required>
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary btn-block">Enregistrer</button>
+                </div>
+            </form>
+            <p class="small text-muted mb-0">Un objectif posé sur une entité s'applique aussi à ses services (sauf s'ils ont leur propre cible). Une même paire entité + indicateur est mise à jour, pas dupliquée.</p>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Objectifs définis</h6></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead><tr><th>Entité</th><th>Indicateur</th><th class="text-right">Cible</th><th>Défini par</th><th></th></tr></thead>
+                    <tbody>
+                        {% for o in objectifs %}
+                            <tr>
+                                <td>{{ o.entite.libelle }}</td>
+                                <td>{{ o.get_indicateur_display }}</td>
+                                <td class="text-right">{{ o.valeur_cible|floatformat:2 }}</td>
+                                <td class="small text-gray-500">{{ o.defini_par.username|default:"—" }} · {{ o.defini_le|date:"d/m/Y" }}</td>
+                                <td class="text-right">
+                                    <form method="post" class="d-inline" onsubmit="return confirm('Supprimer cet objectif ?');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="supprimer" value="{{ o.pk }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted">Aucun objectif défini.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

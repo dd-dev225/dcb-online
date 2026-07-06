@@ -1,0 +1,112 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Opérateurs immobiliers{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-user-friends mr-2 text-primary"></i>Opérateurs immobiliers ({{ stats.total }})</h1>
+        <a href="{% url 'prospection:liste_prospects' %}" class="btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-building fa-sm mr-1"></i>Immeubles prospectés
+        </a>
+        <a href="{% url 'prospection:planning_visites' %}" class="btn btn-sm btn-warning shadow-sm">
+            <i class="fas fa-calendar-alt fa-sm mr-1"></i>Planning
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3"><div class="card border-left-primary shadow py-2 mb-4"><div class="card-body">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total opérateurs</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div></div></div></div>
+        <div class="col-md-3"><div class="card border-left-warning shadow py-2 mb-4"><div class="card-body">
+            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Top opérateurs</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.top }}</div></div></div></div>
+        <div class="col-md-3"><div class="card border-left-info shadow py-2 mb-4"><div class="card-body">
+            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Prioritaires</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.prioritaires }}</div></div></div></div>
+        <div class="col-md-3"><div class="card border-left-success shadow py-2 mb-4"><div class="card-body">
+            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Projet clé 2026</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.projet_2026 }}</div></div></div></div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="form-row align-items-end mb-3">
+                <div class="form-group col-md-3">
+                    <label>Rechercher par nom</label>
+                    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Nom de l'opérateur…">
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Segment</label>
+                    <select name="segment" class="form-control">
+                        <option value="">Tous</option>
+                        {% for code, libelle in segments %}<option value="{{ code }}" {% if code == seg_selectionne %}selected{% endif %}>{{ libelle }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label>CCGC</label>
+                    <select name="ccgc" class="form-control">
+                        <option value="">Toutes</option>
+                        {% for code, libelle in ccgc_choices %}<option value="{{ code }}" {% if code == ccgc_selectionne %}selected{% endif %}>{{ libelle }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Projet 2026</label>
+                    <select name="projet" class="form-control">
+                        <option value="">Tous</option>
+                        <option value="2026" {% if projet_filtre == '2026' %}selected{% endif %}>Projet clé 2026 seulement</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-filter mr-1"></i>Filtrer</button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-sortable">
+                    <thead>
+                        <tr>
+                            <th>Opérateur</th><th>CCGC</th><th>Zone</th><th>Segment</th><th>Projet 2026</th><th>Sensible</th>
+                            {% if peut_editer %}<th></th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for op in operateurs %}
+                            <tr class="{% if op.projet_2026 %}table-warning{% endif %}">
+                                {% if peut_editer %}
+                                    <form method="post">{% csrf_token %}
+                                        <input type="hidden" name="operateur" value="{{ op.pk }}">
+                                        <td>{{ op.nom }}</td>
+                                        <td>{{ op.get_ccgc_display|default:"—" }}</td>
+                                        <td><input type="text" name="zone" value="{{ op.zone }}" class="form-control form-control-sm" style="min-width:120px"></td>
+                                        <td>
+                                            <select name="segment" class="form-control form-control-sm">
+                                                {% for code, libelle in segments %}<option value="{{ code }}" {% if code == op.segment %}selected{% endif %}>{{ libelle }}</option>{% endfor %}
+                                            </select>
+                                        </td>
+                                        <td class="text-center"><input type="checkbox" name="projet_2026" {% if op.projet_2026 %}checked{% endif %}></td>
+                                        <td class="text-center"><input type="checkbox" name="sensible" {% if op.sensible %}checked{% endif %}></td>
+                                        <td><button type="submit" class="btn btn-sm btn-success"><i class="fas fa-save"></i></button></td>
+                                    </form>
+                                {% else %}
+                                    <td>{{ op.nom }}</td>
+                                    <td>{{ op.get_ccgc_display|default:"—" }}</td>
+                                    <td>{{ op.zone|default:"—" }}</td>
+                                    <td>{{ op.get_segment_display }}</td>
+                                    <td class="text-center">{% if op.projet_2026 %}<span class="badge badge-warning">Oui</span>{% else %}—{% endif %}</td>
+                                    <td class="text-center">{% if op.sensible %}<span class="badge badge-danger">Oui</span>{% else %}—{% endif %}</td>
+                                {% endif %}
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="7" class="text-center text-muted">Aucun opérateur.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if page_obj.paginator.num_pages > 1 %}
+                <nav><ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&segment={{ seg_selectionne }}&ccgc={{ ccgc_selectionne }}&projet={{ projet_filtre }}">Précédent</a></li>{% endif %}
+                    <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&segment={{ seg_selectionne }}&ccgc={{ ccgc_selectionne }}&projet={{ projet_filtre }}">Suivant</a></li>{% endif %}
+                </ul></nav>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

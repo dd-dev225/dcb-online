@@ -1,0 +1,55 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Valider les clients stratégiques{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-check-circle mr-2 text-primary"></i>Propositions de clients stratégiques en attente</h1>
+        <a href="{% url 'clients:liste_portefeuille' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm mr-1"></i>Retour au portefeuille
+        </a>
+    </div>
+
+    <!-- Pas de .shadow ici : son flou (1.75rem, cf. cie-admin-2.min.css) "bave"
+         visiblement dans l'espace vide entre le titre et la carte, faute d'autre
+         contenu pour l'absorber visuellement (retour utilisateur explicite). -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-sortable">
+                    <thead>
+                        <tr>
+                            <th>IDABON</th>
+                            <th>Nom / Raison sociale</th>
+                            <th>Proposé par</th>
+                            <th>Le</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in propositions %}
+                            <tr>
+                                <td>{{ c.idabon }}</td>
+                                <td>{{ c.nom_prenoms|default:"—" }}</td>
+                                <td>{{ c.strategique_propose_par.profile.get_role_display|default:c.strategique_propose_par.username }}</td>
+                                <td>{{ c.strategique_propose_le|date:"d/m/Y" }}</td>
+                                <td class="text-right">
+                                    <form method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="client_id" value="{{ c.pk }}">
+                                        <button type="submit" name="action" value="valider" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check"></i> Valider
+                                        </button>
+                                        <button type="submit" name="action" value="refuser" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-times"></i> Refuser
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted">Aucune proposition en attente.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

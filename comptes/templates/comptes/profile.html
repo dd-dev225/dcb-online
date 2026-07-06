@@ -1,0 +1,66 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Mon Profil{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-user-circle mr-2 text-primary"></i>Mon Profil</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 mb-4 text-center">
+            <div class="card shadow h-100">
+                <div class="card-body">
+                    {% if request.user.profile.photo_url %}
+                        <img src="{{ request.user.profile.photo_url }}" alt="Photo de profil"
+                             class="rounded-circle mb-3" style="width: 9rem; height: 9rem; object-fit: cover;">
+                    {% else %}
+                        <i class="fas fa-user-circle text-gray-300 mb-3" style="font-size: 9rem;"></i>
+                    {% endif %}
+                    <h5 class="mb-0">{{ request.user.profile.get_civilite_display|default:"" }} {{ request.user.first_name }} {{ request.user.last_name|upper }}</h5>
+                    <p class="text-gray-500 small mb-2">{{ request.user.username }}</p>
+                    <p class="text-gray-600 small mb-0">{{ role|default:"—" }}</p>
+                    <p class="text-gray-600 small">{{ entite|default:"—" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Mes informations</h6></div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="form-row">
+                            <div class="form-group col-md-2">
+                                <label>{{ form.civilite.label }}</label>
+                                {{ form.civilite }}
+                            </div>
+                            <div class="form-group col-md-5">
+                                <label>{{ form.first_name.label }}</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="form-group col-md-5">
+                                <label>{{ form.last_name.label }}</label>
+                                {{ form.last_name }}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>{{ form.email.label }}</label>
+                                {{ form.email }}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>{{ form.telephone.label }}</label>
+                                {{ form.telephone }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ form.photo.label }}</label>
+                            {{ form.photo }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Agenda des visites{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-calendar-day mr-2 text-primary"></i>Agenda : {{ nom_mois }} {{ annee }} ({{ total_mois }} visite{{ total_mois|pluralize }})</h1>
+        <div>
+            <a href="{% url 'prospection:calendrier_visites' %}?annee={{ annee_precedente }}&mois={{ mois_precedent }}" class="btn btn-sm btn-secondary shadow-sm"><i class="fas fa-chevron-left"></i></a>
+            <a href="{% url 'prospection:calendrier_visites' %}" class="btn btn-sm btn-outline-secondary shadow-sm">Aujourd'hui</a>
+            <a href="{% url 'prospection:calendrier_visites' %}?annee={{ annee_suivante }}&mois={{ mois_suivant }}" class="btn btn-sm btn-secondary shadow-sm"><i class="fas fa-chevron-right"></i></a>
+            <a href="{% url 'prospection:planning_visites' %}" class="btn btn-sm btn-warning shadow-sm"><i class="fas fa-list fa-sm mr-1"></i>Planning</a>
+        </div>
+    </div>
+
+    <!-- Grille classique (tablette/desktop) : 7 colonnes fixes, illisible sur un
+         écran étroit (retour utilisateur), donc masquée en dessous du seuil `md`
+         au profit de la liste chronologique ci-dessous. -->
+    <div class="card mb-4 d-none d-md-block">
+        <div class="card-body p-2">
+            <table class="table table-bordered mb-0" style="table-layout: fixed;">
+                <thead>
+                    <tr>
+                        {% for j in jours_semaine %}<th class="text-center small text-gray-600">{{ j }}</th>{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for semaine in semaines %}
+                        <tr>
+                            {% for jour, visites_jour in semaine %}
+                                <td class="align-top {% if jour == 0 %}bg-light{% endif %}" style="height: 110px; width: 14.28%;">
+                                    {% if jour != 0 %}
+                                        <div class="small font-weight-bold {% if jour == aujourdhui.day and mois == aujourdhui.month and annee == aujourdhui.year %}text-white bg-primary rounded px-1{% else %}text-gray-700{% endif %}" style="display:inline-block;">
+                                            {{ jour }}
+                                        </div>
+                                        {% for v in visites_jour %}
+                                            <div class="small mt-1 px-1 rounded {% if v.est_realisee %}bg-success text-white{% else %}bg-warning{% endif %}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ v.cible_nom }} : {{ v.commune_quartier|default:'' }} {% if v.direction_regionale %}({{ v.direction_regionale.code }}){% endif %}">
+                                                {% if v.est_realisee %}<i class="fas fa-check-circle"></i>{% else %}<i class="fas fa-clock"></i>{% endif %}
+                                                {{ v.cible_nom|truncatechars:16 }}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Liste chronologique (mobile) : un jour par carte, pleine largeur, lisible
+         sans compression. Seuls les jours avec au moins une visite sont affichés. -->
+    <div class="d-md-none">
+        {% for j in jours_avec_visites %}
+            <div class="card mb-2">
+                <div class="card-header py-2">
+                    <span class="font-weight-bold {% if j.date == aujourdhui %}text-primary{% endif %}">
+                        {{ j.date|date:"l d F" }}
+                    </span>
+                    {% if j.date == aujourdhui %}<span class="badge badge-primary ml-1">Aujourd'hui</span>{% endif %}
+                </div>
+                <div class="card-body py-2">
+                    {% for v in j.visites %}
+                        <div class="small mb-1 px-2 py-1 rounded {% if v.est_realisee %}bg-success text-white{% else %}bg-warning{% endif %}">
+                            {% if v.est_realisee %}<i class="fas fa-check-circle"></i>{% else %}<i class="fas fa-clock"></i>{% endif %}
+                            {{ v.cible_nom }}{% if v.commune_quartier %}, {{ v.commune_quartier }}{% endif %}{% if v.direction_regionale %} ({{ v.direction_regionale.code }}){% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-muted text-center">Aucune visite planifiée ce mois-ci.</p>
+        {% endfor %}
+    </div>
+
+    <p class="small text-gray-500">
+        <span class="badge badge-warning">&nbsp;</span> Planifiée &nbsp;
+        <span class="badge badge-success">&nbsp;</span> Réalisée
+    </p>
+{% endblock %}

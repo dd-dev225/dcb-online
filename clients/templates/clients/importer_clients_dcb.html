@@ -1,0 +1,32 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Import SAPHIR — nouveaux clients{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-file-import mr-2 text-primary"></i>Import SAPHIR — base clients</h1>
+        <a href="{% url 'clients:liste_portefeuille' %}" class="btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm mr-1"></i>Retour au portefeuille
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Importer un export SAPHIR (Client DCB)</h6></div>
+        <div class="card-body">
+            <p class="text-gray-600">
+                Déposez un export SAPHIR au format <strong>Client DCB.xlsx</strong> (feuille « HT GLOBAL »).
+                Les <strong>nouveaux clients</strong> sont ajoutés à la base maîtresse et les clients existants sont
+                <strong>enrichis</strong> (les valeurs déjà saisies ne sont jamais écrasées). Les identifiants sont
+                mis à la forme canonique à 8 chiffres.
+            </p>
+
+            {% if erreur %}<div class="alert alert-danger">{{ erreur }}</div>{% endif %}
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="file" name="fichier" accept=".xlsx" class="form-control-file" required>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-upload mr-1"></i>Importer</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

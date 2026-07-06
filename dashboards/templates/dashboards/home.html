@@ -1,0 +1,74 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Tableau de bord{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">{{ salutation }}, {{ display_name }}</h1>
+            <p class="text-gray-500 mb-0">{{ entite|default:"" }}</p>
+        </div>
+    </div>
+
+    {% if sections %}
+        <h6 class="text-gray-600 mb-3">Mon activité</h6>
+    {% endif %}
+    {% for section in sections %}
+        <div class="card shadow mb-4 border-left-{{ section.couleur }}">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-{{ section.couleur }}">
+                    <i class="fas {{ section.icone }} mr-2"></i>{{ section.titre }}
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- col-md-2 (6 par ligne) plutôt que col-md-3 (4 par ligne) :
+                         cette boucle est partagée par des sections à 2, 3, 4 ou 5
+                         indicateurs (Fiches complètes vient d'en ajouter un 5e à
+                         Relation Clients Business). Avec 4 par ligne, 5 stats
+                         créaient une ligne à moitié vide (même bug déjà corrigé
+                         côté Dash) ; jusqu'à 6 par ligne, aucun des cas actuels
+                         ne déborde. -->
+                    {% for stat in section.stats %}
+                        <div class="col-6 col-md-2 mb-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas {{ stat.icone }} fa-2x text-gray-300 mr-3"></i>
+                                <div>
+                                    <div class="text-xs font-weight-bold text-gray-500 text-uppercase mb-1">
+                                        {{ stat.label }}
+                                        {% if stat.aide %}
+                                            <i class="fas fa-question-circle" title="{{ stat.aide }}"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {% if stat.badge %}
+                                            <span class="badge badge-{{ stat.badge }}">{{ stat.valeur }}</span>
+                                        {% else %}
+                                            {{ stat.valeur }}
+                                        {% endif %}
+                                    </div>
+                                    {% if stat.delta %}
+                                        <div class="small {% if stat.delta.sens == 'hausse' %}text-success{% else %}text-danger{% endif %}">
+                                            <i class="fas fa-arrow-{% if stat.delta.sens == 'hausse' %}up{% else %}down{% endif %} mr-1"></i>{{ stat.delta.texte }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div>
+                    {% for bouton in section.boutons %}
+                        <a href="{% url bouton.url %}" class="btn btn-{{ section.couleur }} btn-acces-detail shadow-sm mr-2 mb-2">
+                            <i class="fas {{ bouton.icone }} mr-2"></i>{{ bouton.label }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="card shadow mb-4">
+            <div class="card-body text-center text-gray-500 py-5">
+                Aucun tableau de bord n'est encore configuré pour votre compte.
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Messages reçus{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-inbox mr-2 text-primary"></i>Messages reçus</h1>
+        <div>
+            <a href="{% url 'messagerie:exporter_reception' %}" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm">
+                <i class="fas fa-file-excel fa-sm mr-1"></i>Exporter
+            </a>
+            <a href="{% url 'messagerie:boite_envoi' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+                <i class="fas fa-paper-plane fa-sm mr-1"></i>Messages envoyés
+            </a>
+            <a href="{% url 'messagerie:nouveau_message' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm mr-1"></i>Nouveau message
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-sortable">
+                    <thead>
+                        <tr>
+                            <th>De</th>
+                            <th>Message</th>
+                            <th>Reçu</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for message in messages_recus %}
+                            <tr {% if message.pk in ids_non_lus %}class="font-weight-bold"{% endif %}>
+                                <td>{{ message.entite_expeditrice }}</td>
+                                <td class="text-truncate" style="max-width: 400px;">{{ message.contenu }}</td>
+                                <td>{{ message.envoye_le|date:"d/m/Y H:i" }}</td>
+                                <td><a href="{% url 'messagerie:lire_message' message.pk %}" class="btn btn-sm btn-outline-primary">Lire</a></td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted">Aucun message reçu.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,328 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Fiche Qualité de Fourniture : CIE</title>
+    <link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,800" rel="stylesheet">
+    <link href="{% static 'dashboards/vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'dashboards/css/cie-admin-2.min.css' %}" rel="stylesheet">
+    <link href="{% static 'dashboards/css/cie-theme.css' %}" rel="stylesheet">
+</head>
+<body class="bg-gradient-primary">
+<div class="container py-5" style="max-width: 900px;">
+
+    <div class="text-center text-white mb-4">
+        <img src="{% static 'dashboards/img/on_line_r.png' %}" alt="CIE" style="width: 5rem; height: 5rem; object-fit: contain;">
+        <h1 class="h3 mt-2 mb-0">Fiche de collecte : Qualité de la fourniture électrique</h1>
+        <p class="mb-0">À remplir pour toute réclamation liée à la qualité de l'alimentation électrique{% if lien.client %} ({{ lien.client.nom_prenoms }}){% endif %}</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    {% if form.errors or evenements_fs.non_form_errors or releves_fs.non_form_errors %}
+        <div class="alert alert-danger">Merci de corriger les champs signalés ci-dessous avant de soumettre la fiche.</div>
+    {% endif %}
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-light">
+            <h6 class="m-0 font-weight-bold text-primary">1. Information sur les phénomènes électriques</h6>
+        </div>
+        <div class="card-body small">
+            <p><strong>Coupure intempestive</strong> : interruption brutale et non planifiée de la fourniture d'électricité qui survient de façon récurrente.</p>
+            <p><strong>Microcoupure</strong> : interruption très brève de moins d'une minute (quelques millisecondes à quelques secondes) de la fourniture d'électricité, souvent imperceptible à l'échelle humaine.</p>
+            <p><strong>Variation de tension</strong> : élévation ou chute anormale de la tension nominale de service (U &gt; 10%). Plage nominale en 15 000 V : 13 500 V ≤ U ≤ 16 500 V ; en 30 000 V : 27 000 V ≤ U ≤ 33 000 V.</p>
+            <p class="mb-0"><strong>Inversion de phase</strong> : permutation de l'ordre des phases dans un système triphasé, modifiant la séquence de phase prévue.</p>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">2. Informations générales du client</h6></div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>{{ form.nom_entreprise.label }} *</label>
+                        {{ form.nom_entreprise }}
+                        <small class="form-text text-muted">{{ form.nom_entreprise.help_text }}</small>
+                        {% for e in form.nom_entreprise.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>{{ form.nom_correspondant.label }} *</label>
+                        {{ form.nom_correspondant }}
+                        <small class="form-text text-muted">{{ form.nom_correspondant.help_text }}</small>
+                        {% for e in form.nom_correspondant.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>{{ form.telephone.label }} *</label>
+                        {{ form.telephone }}
+                        <small class="form-text text-muted">{{ form.telephone.help_text }}</small>
+                        {% for e in form.telephone.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>{{ form.email.label }}</label>
+                        {{ form.email }}
+                        <small class="form-text text-muted">{{ form.email.help_text }}</small>
+                        {% for e in form.email.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>{{ form.gps_latitude.label }}</label>
+                        {{ form.gps_latitude }}
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>{{ form.gps_longitude.label }}</label>
+                        {{ form.gps_longitude }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">3. Date(s) et heure(s) des constats</h6></div>
+            <div class="card-body">
+                <p class="small text-muted">Déclarez au moins un événement. Utilisez le bouton « Ajouter un autre événement » si plusieurs constats ont eu lieu (5 maximum).</p>
+                {{ evenements_fs.management_form }}
+                {% for ef in evenements_fs %}
+                    <div class="border rounded p-3 mb-3 qualite-bloc-evenement {% if forloop.counter > 1 and not ef.errors and not ef.date.value %}d-none{% endif %}" data-bloc="{{ forloop.counter }}">
+                        <h6 class="text-primary">Événement {{ forloop.counter }}</h6>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label>{{ ef.date.label }}</label>
+                                {{ ef.date }}
+                                {% for e in ef.date.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>{{ ef.heure_debut.label }}</label>
+                                {{ ef.heure_debut }}
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>{{ ef.heure_fin.label }}</label>
+                                {{ ef.heure_fin }}
+                                <small class="form-text text-muted">{{ ef.heure_fin.help_text }}</small>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ ef.phenomenes.label }}</label>
+                            <small class="form-text text-muted">{{ ef.phenomenes.help_text }}</small>
+                            {{ ef.phenomenes }}
+                            {% for e in ef.phenomenes.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                        </div>
+                        <div class="form-group mb-0">
+                            <label>{{ ef.autre_description.label }}</label>
+                            {{ ef.autre_description }}
+                            <small class="form-text text-muted">{{ ef.autre_description.help_text }}</small>
+                            {% for e in ef.autre_description.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-ajouter-evenement">
+                    <i class="fas fa-plus mr-1"></i>Ajouter un autre événement
+                </button>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">4. Éléments de constat</h6></div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>{{ form.methode_constat.label }} *</label>
+                    <small class="form-text text-muted">{{ form.methode_constat.help_text }}</small>
+                    {{ form.methode_constat }}
+                    {% for e in form.methode_constat.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.obs_visuelle.label }}</label>
+                    {{ form.obs_visuelle }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.obs_appareil.label }}</label>
+                    {{ form.obs_appareil }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.obs_enregistrement.label }}</label>
+                    {{ form.obs_enregistrement }}
+                </div>
+                <div class="form-group mb-0">
+                    <label>{{ form.obs_autre_constat.label }}</label>
+                    {{ form.obs_autre_constat }}
+                    <small class="form-text text-muted">{{ form.obs_autre_constat.help_text }}</small>
+                    {% for e in form.obs_autre_constat.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">5. Relevés de tension (facultatif)</h6></div>
+            <div class="card-body">
+                <p class="small text-muted">Si vous disposez de mesures (multimètre, analyseur de réseau...), ajoutez-les ici. 5 relevés maximum.</p>
+                {{ releves_fs.management_form }}
+                {% for tf in releves_fs %}
+                    <div class="border rounded p-3 mb-3 qualite-bloc-releve {% if not tf.errors and not tf.date.value and not tf.u12.value %}d-none{% endif %}" data-bloc="{{ forloop.counter }}">
+                        <h6 class="text-primary">Relevé {{ forloop.counter }}</h6>
+                        <div class="form-row">
+                            <div class="form-group col-md-3">
+                                <label>{{ tf.date.label }}</label>
+                                {{ tf.date }}
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label>{{ tf.heure.label }}</label>
+                                {{ tf.heure }}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>{{ tf.appareil_mesure.label }}</label>
+                                {{ tf.appareil_mesure }}
+                                <small class="form-text text-muted">{{ tf.appareil_mesure.help_text }}</small>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label>{{ tf.u12.label }}</label>
+                                {{ tf.u12 }}
+                                <small class="form-text text-muted">{{ tf.u12.help_text }}</small>
+                                {% for e in tf.u12.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>{{ tf.u23.label }}</label>
+                                {{ tf.u23 }}
+                                <small class="form-text text-muted">{{ tf.u23.help_text }}</small>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>{{ tf.u31.label }}</label>
+                                {{ tf.u31 }}
+                                <small class="form-text text-muted">{{ tf.u31.help_text }}</small>
+                            </div>
+                        </div>
+                        <div class="form-row mb-0">
+                            <div class="form-group col-md-4">
+                                <label>{{ tf.v1.label }}</label>
+                                {{ tf.v1 }}
+                                <small class="form-text text-muted">{{ tf.v1.help_text }}</small>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>{{ tf.v2.label }}</label>
+                                {{ tf.v2 }}
+                                <small class="form-text text-muted">{{ tf.v2.help_text }}</small>
+                            </div>
+                            <div class="form-group col-md-4 mb-0">
+                                <label>{{ tf.v3.label }}</label>
+                                {{ tf.v3 }}
+                                <small class="form-text text-muted">{{ tf.v3.help_text }}</small>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-ajouter-releve">
+                    <i class="fas fa-plus mr-1"></i>Ajouter un relevé de tension
+                </button>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">6. Fréquence du phénomène</h6></div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>{{ form.frequence_phenomene.label }} *</label>
+                    <small class="form-text text-muted d-block">{{ form.frequence_phenomene.help_text }}</small>
+                    {{ form.frequence_phenomene }}
+                    {% for e in form.frequence_phenomene.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+                <div class="form-group mb-0">
+                    <label>{{ form.frequence_detail.label }}</label>
+                    {{ form.frequence_detail }}
+                    <small class="form-text text-muted">{{ form.frequence_detail.help_text }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">7. Conditions particulières au moment du constat</h6></div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>{{ form.conditions_constat.label }} *</label>
+                    <small class="form-text text-muted">{{ form.conditions_constat.help_text }}</small>
+                    {{ form.conditions_constat }}
+                    {% for e in form.conditions_constat.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+                <div class="form-group mb-0">
+                    <label>{{ form.conditions_detail.label }}</label>
+                    {{ form.conditions_detail }}
+                    <small class="form-text text-muted">{{ form.conditions_detail.help_text }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">8. Documents ou enregistrements joints</h6></div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>{{ form.documents_joints.label }}</label>
+                    <small class="form-text text-muted">{{ form.documents_joints.help_text }}</small>
+                    {{ form.documents_joints }}
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>{{ form.photo_jointe.label }}</label>
+                        {{ form.photo_jointe }}
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>{{ form.rapport_joint.label }}</label>
+                        {{ form.rapport_joint }}
+                    </div>
+                </div>
+                <div class="form-group mb-0">
+                    <label>{{ form.documents_observations.label }}</label>
+                    {{ form.documents_observations }}
+                    <small class="form-text text-muted">{{ form.documents_observations.help_text }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">9. Observations ou remarques complémentaires</h6></div>
+            <div class="card-body">
+                <div class="form-group mb-0">
+                    {{ form.observations_finales }}
+                    <small class="form-text text-muted">{{ form.observations_finales.help_text }}</small>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block mb-5">
+            <i class="fas fa-paper-plane mr-1"></i>Envoyer ma réclamation
+        </button>
+    </form>
+
+    <p class="text-center text-white small mb-5">Direction Clientèle Business, CIE. Votre réclamation sera transmise au Support Technique dans les meilleurs délais.</p>
+</div>
+
+<script src="{% static 'dashboards/vendor/jquery/jquery.min.js' %}"></script>
+<script>
+(function () {
+    function activerBloc(bouton, classe, max) {
+        var blocs = document.querySelectorAll(classe);
+        var visibles = 0;
+        blocs.forEach(function (b) { if (!b.classList.contains('d-none')) visibles++; });
+        if (visibles >= blocs.length) { bouton.style.display = 'none'; return; }
+        blocs[visibles].classList.remove('d-none');
+        if (visibles + 1 >= max) { bouton.style.display = 'none'; }
+    }
+    var btnEvt = document.getElementById('btn-ajouter-evenement');
+    if (btnEvt) {
+        btnEvt.addEventListener('click', function () { activerBloc(btnEvt, '.qualite-bloc-evenement', 5); });
+    }
+    var btnTen = document.getElementById('btn-ajouter-releve');
+    if (btnTen) {
+        btnTen.addEventListener('click', function () { activerBloc(btnTen, '.qualite-bloc-releve', 5); });
+    }
+})();
+</script>
+</body>
+</html>

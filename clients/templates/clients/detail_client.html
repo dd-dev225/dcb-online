@@ -1,0 +1,143 @@
+{% extends "dashboards/base.html" %}
+{% block title %}{{ client.nom_prenoms|default:client.idabon }} — Client{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-user-tie mr-2 text-primary"></i>{{ client.nom_prenoms|default:"(Sans nom)" }}
+            {% if client.est_strategique %}<span class="badge badge-success ml-2">Stratégique</span>{% endif %}
+        </h1>
+        <div>
+            <a href="{% url 'clients:liste_financiere' %}" class="btn btn-sm btn-secondary shadow-sm">
+                <i class="fas fa-arrow-left fa-sm mr-1"></i>Retour
+            </a>
+            {% if peut_editer %}
+                <a href="{% url 'clients:fiche_client' client.idabon %}" class="btn btn-sm btn-primary shadow-sm">
+                    <i class="fas fa-edit fa-sm mr-1"></i>Éditer la fiche
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bandeau d'indicateurs financiers -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card border-left-primary shadow py-2 mb-4">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">CA sur 12 mois (FCFA)</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ca_1an|floatformat:0 }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-left-info shadow py-2 mb-4">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">CA sur 36 mois (FCFA)</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ ca_3ans|floatformat:0 }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-left-warning shadow py-2 mb-4">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Impayé (FCFA)</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ impaye_total|floatformat:0 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Identification</h6></div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr><th class="text-muted" style="width:45%">IDABON</th><td>{{ client.idabon }}</td></tr>
+                        <tr><th class="text-muted">Nom / Raison sociale</th><td>{{ client.nom_prenoms|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Secteur d'activité</th><td>{{ client.secteur_activite|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Branche d'activité</th><td>{{ client.branche_activite|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Agence / Exploitation</th><td>{{ client.agence|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Entité</th><td>{{ client.entite|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Direction Régionale</th><td>{% if client.direction_regionale %}{{ client.direction_regionale.code }} — {{ client.direction_regionale.libelle }}{% else %}—{% endif %}</td></tr>
+                        <tr><th class="text-muted">Localisation</th><td>{{ client.localisation|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Base de rattachement</th><td>
+                            {% if client.dans_client_dcb and client.dans_facturation %}<span class="badge badge-info">Client DCB + Facturation</span>
+                            {% elif client.dans_client_dcb %}<span class="badge badge-primary">Client DCB (non facturé)</span>
+                            {% elif client.dans_facturation %}<span class="badge badge-secondary">Facturation (hors référentiel DCB)</span>
+                            {% else %}—{% endif %}
+                        </td></tr>
+                        <tr><th class="text-muted">Client stratégique</th><td>{{ client.est_strategique|yesno:"Oui,Non" }}</td></tr>
+                        <tr><th class="text-muted">Groupe électrogène</th><td>{% if client.groupe_electrogene_dispo is True %}Oui{% if client.groupe_electrogene_puissance %} ({{ client.groupe_electrogene_puissance|floatformat:0 }} kVA){% endif %}{% elif client.groupe_electrogene_dispo is False %}Non{% else %}—{% endif %}</td></tr>
+                        <tr><th class="text-muted">Réclamations</th><td>{{ nb_reclamations }}</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Interlocuteurs</h6></div>
+                <div class="card-body">
+                    {% if interlocuteurs %}
+                        <table class="table table-sm mb-0">
+                            <thead><tr><th>Rôle</th><th>Nom</th><th>Fonction</th><th>Contact</th></tr></thead>
+                            <tbody>
+                                {% for i in interlocuteurs %}
+                                    <tr>
+                                        <td>{{ i.get_role_display|default:"—" }}</td>
+                                        <td>{{ i.nom|default:"—" }}</td>
+                                        <td>{{ i.fonction|default:"—" }}</td>
+                                        <td class="text-nowrap">
+                                            {{ i.telephone|default:"—" }}
+                                            {% if i.email %}
+                                                <a href="mailto:{{ i.email|urlencode }}?subject=CIE%20DCB%20%3A%20{{ client.nom_prenoms|urlencode }}"
+                                                   class="btn btn-sm btn-outline-info ml-1" title="Écrire à {{ i.email }} via Outlook">
+                                                    <i class="fas fa-envelope"></i>
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="text-muted mb-0">Aucun interlocuteur renseigné.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Abonnements &amp; points de livraison</h6></div>
+                <div class="card-body">
+                    {% if abonnements %}
+                        <table class="table table-sm mb-0">
+                            <thead><tr><th>Réf. raccordement</th><th>Puissance</th><th>Poste / Départ</th><th>Date abon.</th></tr></thead>
+                            <tbody>
+                                {% for a in abonnements %}
+                                    <tr>
+                                        <td>{{ a.refraccord|default:"—" }}</td>
+                                        <td>{% if a.psabon %}{{ a.psabon|floatformat:0 }} kW{% else %}—{% endif %}</td>
+                                        <td>{{ a.poste|default:"—" }}{% if a.depart %} / {{ a.depart }}{% endif %}</td>
+                                        <td>{{ a.date_abonnement|default:"—" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="text-muted mb-0">Aucun abonnement.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Contrat</h6></div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr><th class="text-muted" style="width:45%">Contrat signé</th><td>{% if client.a_contrat is True %}Oui{% elif client.a_contrat is False %}Non{% else %}Non renseigné{% endif %}</td></tr>
+                        <tr><th class="text-muted">Référence physique</th><td>{{ client.contrat_reference_physique|default:"—" }}</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

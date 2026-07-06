@@ -1,0 +1,114 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Clients : vue financière{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-coins mr-2 text-primary"></i>Clients : vue financière ({{ page_obj.paginator.count }})</h1>
+        <div>
+            <a href="{% url 'clients:exporter_financiere' %}?tri={{ tri }}&dir={{ dir }}&entite={{ entite_filtre }}&dr={{ dr_filtre }}&strategique={{ strategique_filtre }}&q={{ recherche }}"
+               class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm">
+                <i class="fas fa-file-excel fa-sm mr-1"></i>Exporter
+            </a>
+            <a href="{% if is_direction %}{% url 'dashboards:home' %}{% else %}{% url 'clients:liste_portefeuille' %}{% endif %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+                <i class="fas fa-arrow-left fa-sm mr-1"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Pas de .shadow ici : son flou (1.75rem, cf. cie-admin-2.min.css) "bave"
+         visiblement dans l'espace vide entre le titre et la carte, faute d'autre
+         contenu pour l'absorber visuellement (retour utilisateur explicite). -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="form-row align-items-end mb-3">
+                <input type="hidden" name="tri" value="{{ tri }}">
+                <input type="hidden" name="dir" value="{{ dir }}">
+                <div class="form-group col-md-3">
+                    <label>Recherche (IDABON ou nom)</label>
+                    <input type="text" name="q" value="{{ recherche }}" class="form-control" placeholder="Ex: 2102601 ou SOTIPA">
+                </div>
+                <div class="form-group col-md-2">
+                    <label>Entité</label>
+                    <select name="entite" class="form-control">
+                        <option value="">Toutes</option>
+                        {% for e in entites_dispo %}
+                            <option value="{{ e.code }}" {% if e.code == entite_filtre %}selected{% endif %}>{{ e.libelle }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <label>Direction Régionale</label>
+                    <select name="dr" class="form-control">
+                        <option value="">Toutes</option>
+                        {% for dr in drs_dispo %}
+                            <option value="{{ dr.code }}" {% if dr.code == dr_filtre %}selected{% endif %}>{{ dr.code }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <label>Stratégique</label>
+                    <select name="strategique" class="form-control">
+                        <option value="">Tous</option>
+                        <option value="oui" {% if strategique_filtre == "oui" %}selected{% endif %}>Oui</option>
+                        <option value="non" {% if strategique_filtre == "non" %}selected{% endif %}>Non</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-1">
+                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-filter"></i></button>
+                </div>
+            </form>
+
+            <!-- Tri par clic sur l'en-tête, géré côté serveur (pas par
+                 sortable-tables.js) : la liste est paginée à 50, un tri en JS ne
+                 trierait que la page affichée, pas l'ensemble filtré. -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            {% for col, libelle in colonnes_tri.items %}
+                                <th class="th-sortable {% if col == 'ca' or col == 'impaye' %}text-right{% endif %} {% if tri == col %}tri-{{ dir }}{% endif %}">
+                                    <a href="?tri={{ col }}&dir={% if tri == col and dir == 'asc' %}desc{% else %}asc{% endif %}&entite={{ entite_filtre }}&dr={{ dr_filtre }}&strategique={{ strategique_filtre }}&q={{ recherche }}"
+                                       class="text-reset text-decoration-none d-block">{{ libelle }}</a>
+                                </th>
+                            {% endfor %}
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in page_obj %}
+                            <tr {% if c.est_strategique %}class="table-warning"{% endif %}>
+                                <td>{{ c.idabon }}</td>
+                                <td>{{ c.nom_prenoms|default:"—" }}</td>
+                                <td>{{ c.entite|default:"—" }}</td>
+                                <td>{{ c.direction_regionale.code|default:"—" }}</td>
+                                <td>{% if c.est_strategique %}<span class="badge badge-success">Oui</span>{% else %}—{% endif %}</td>
+                                <td class="text-right">{{ c.ca_total|default_if_none:0|floatformat:0 }}</td>
+                                <td class="text-right">{{ c.impaye_total|default_if_none:0|floatformat:0 }}</td>
+                                <td class="text-right text-nowrap">
+                                    <a href="{% url 'clients:detail_client' c.idabon %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-eye"></i> Voir
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="8" class="text-center text-muted">Aucun client.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if page_obj.paginator.num_pages > 1 %}
+                <nav>
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&tri={{ tri }}&dir={{ dir }}&entite={{ entite_filtre }}&dr={{ dr_filtre }}&strategique={{ strategique_filtre }}&q={{ recherche }}">Précédent</a></li>
+                        {% endif %}
+                        <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&tri={{ tri }}&dir={{ dir }}&entite={{ entite_filtre }}&dr={{ dr_filtre }}&strategique={{ strategique_filtre }}&q={{ recherche }}">Suivant</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

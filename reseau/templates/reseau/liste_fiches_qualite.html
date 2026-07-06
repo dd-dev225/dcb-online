@@ -1,0 +1,134 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Fiches Qualité de Fourniture{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-bolt mr-2 text-primary"></i>Fiches Qualité de Fourniture ({{ total }})</h1>
+        <div>
+            <a href="{% url 'reseau:generer_lien_qualite' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-link fa-sm mr-1"></i>Générer un lien
+            </a>
+            <a href="{% url 'reseau:exporter_fiches_qualite' %}?statut={{ statut_filtre }}&q={{ recherche }}" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm">
+                <i class="fas fa-file-excel fa-sm mr-1"></i>Exporter
+            </a>
+            <a href="{% url 'reseau:dashboard' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+                <i class="fas fa-arrow-left fa-sm mr-1"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card border-left-info shadow py-2 mb-4"><div class="card-body">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Nouvelles</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ nb_nouveau }}</div>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-warning shadow py-2 mb-4"><div class="card-body">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">En cours d'analyse</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ nb_en_cours }}</div>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-success shadow py-2 mb-4"><div class="card-body">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Traitées</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ nb_traite }}</div>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-primary shadow py-2 mb-4"><div class="card-body">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total reçu</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total }}</div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-chart-bar mr-2"></i>Phénomènes électriques déclarés</h6></div>
+        <div class="card-body">
+            {% if phenomenes %}
+                {% for p in phenomenes %}
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small">
+                            <span>{{ p.libelle }}</span>
+                            <span class="text-gray-500">{{ p.nb }}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-warning" role="progressbar"
+                                 style="width: {% widthratio p.nb phenomene_max 100 %}%;"
+                                 aria-valuenow="{{ p.nb }}" aria-valuemin="0" aria-valuemax="{{ phenomene_max }}"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">Aucune fiche reçue pour l'instant.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="form-row align-items-end mb-3">
+                <div class="form-group col-md-4">
+                    <label>Recherche (entreprise, correspondant, IDABON)</label>
+                    <input type="text" name="q" value="{{ recherche }}" class="form-control">
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Statut</label>
+                    <select name="statut" class="form-control">
+                        <option value="">Tous</option>
+                        {% for code, libelle in statuts %}
+                            <option value="{{ code }}" {% if code == statut_filtre %}selected{% endif %}>{{ libelle }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-1">
+                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-filter"></i></button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Entreprise</th><th>Client</th><th>Correspondant</th><th>Contact</th>
+                            <th>Nb événements</th><th>Soumis le</th><th>Statut</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in fiches %}
+                            <tr>
+                                <td>{{ f.nom_entreprise }}</td>
+                                <td>
+                                    {% if f.client %}
+                                        <a href="{% url 'clients:detail_client' f.client.idabon %}">{{ f.client.nom_prenoms|default:f.client.idabon }}</a>
+                                    {% else %}<span class="text-muted">—</span>{% endif %}
+                                </td>
+                                <td>{{ f.nom_correspondant }}</td>
+                                <td>{{ f.telephone }}</td>
+                                <td>{{ f.evenements.count }}</td>
+                                <td>{{ f.soumis_le|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    {% if f.statut == "nouveau" %}<span class="badge badge-info">Nouveau</span>
+                                    {% elif f.statut == "en_cours" %}<span class="badge badge-warning">En cours</span>
+                                    {% else %}<span class="badge badge-success">Traité</span>{% endif %}
+                                </td>
+                                <td><a href="{% url 'reseau:detail_fiche_qualite' f.pk %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-eye"></i></a></td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="8" class="text-center text-muted">Aucune fiche.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if page_obj.paginator.num_pages > 1 %}
+                <nav><ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&statut={{ statut_filtre }}&q={{ recherche }}">Précédent</a></li>{% endif %}
+                    <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&statut={{ statut_filtre }}&q={{ recherche }}">Suivant</a></li>{% endif %}
+                </ul></nav>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

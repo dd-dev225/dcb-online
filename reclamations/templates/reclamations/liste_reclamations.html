@@ -1,0 +1,164 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Réclamations{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-comment-dots mr-2 text-primary"></i>Réclamations ({{ total }})</h1>
+        <div>
+            <a href="{% url 'reclamations:exporter_reclamations' %}?statut={{ statut_filtre }}&canal={{ canal_filtre }}&segment={{ segment_filtre }}&hors_delai={{ hors_delai_filtre }}"
+               class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm">
+                <i class="fas fa-file-excel fa-sm mr-1"></i>Exporter
+            </a>
+        </div>
+    </div>
+
+    <!-- Indicateurs : DMR et taux Hors Délai en plus du taux de traitement déjà
+         suivi sur les dashboards Engagement (demande utilisateur explicite). -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card border-left-primary shadow py-2 mb-4"><div class="card-body">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                    DMR <i class="fas fa-question-circle ml-1" title="Délai Moyen de traitement des Réclamations (en jours), sur les réclamations traitées."></i>
+                </div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{% if dmr is not None %}{{ dmr|floatformat:1 }} j{% else %}—{% endif %}</div>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-danger shadow py-2 mb-4"><div class="card-body">
+                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                    Taux Hors Délai (&gt; {{ seuil_hors_delai }}j) <i class="fas fa-question-circle ml-1" title="Part des réclamations traitées dont le délai réel dépasse {{ seuil_hors_delai }} jours."></i>
+                </div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                    {% if taux_hors_delai_pct is not None %}{{ taux_hors_delai_pct|floatformat:0 }}%{% else %}—{% endif %}
+                    <span class="small text-gray-500">({{ nb_hors_delai }} / {{ nb_avec_delai }})</span>
+                </div>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-success shadow py-2 mb-4"><div class="card-body">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Taux de traitement</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{% if taux_traitement_pct is not None %}{{ taux_traitement_pct|floatformat:0 }}%{% else %}—{% endif %}</div>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-info shadow py-2 mb-4"><div class="card-body">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Réclamations (périmètre)</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total }}</div>
+            </div></div>
+        </div>
+    </div>
+
+    <!-- Répartition par nature de réclamation (demande utilisateur). Barres CSS
+         simples plutôt qu'un nouveau dashboard Plotly/Dash : cette page est une
+         vue Django classique (filtres server-side, pagination), pas un dashboard
+         Dash, donc pas de justification à charger toute la stack Dash pour un
+         seul graphique ici. -->
+    <div class="card mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-chart-bar mr-2"></i>Réclamations par nature</h6></div>
+        <div class="card-body">
+            {% if nature_reclamations %}
+                {% for n in nature_reclamations %}
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small">
+                            <span>{{ n.nature_reclamation }}</span>
+                            <span class="text-gray-500">{{ n.nb }}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-danger" role="progressbar"
+                                 style="width: {% widthratio n.nb nature_max 100 %}%;"
+                                 aria-valuenow="{{ n.nb }}" aria-valuemin="0" aria-valuemax="{{ nature_max }}"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">Aucune donnée de nature de réclamation sur ce périmètre.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="form-row align-items-end mb-3">
+                <div class="form-group col-md-3">
+                    <label>Statut</label>
+                    <select name="statut" class="form-control">
+                        <option value="">Tous</option>
+                        {% for s in statuts %}<option value="{{ s }}" {% if s == statut_filtre %}selected{% endif %}>{{ s }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Canal</label>
+                    <select name="canal" class="form-control">
+                        <option value="">Tous</option>
+                        {% for c in canaux %}<option value="{{ c }}" {% if c == canal_filtre %}selected{% endif %}>{{ c }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Segment client</label>
+                    <select name="segment" class="form-control">
+                        <option value="">Tous</option>
+                        {% for s in segments %}<option value="{{ s }}" {% if s == segment_filtre %}selected{% endif %}>{{ s }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <label>Hors Délai</label>
+                    <select name="hors_delai" class="form-control">
+                        <option value="">Tous</option>
+                        <option value="oui" {% if hors_delai_filtre == 'oui' %}selected{% endif %}>Hors Délai seulement</option>
+                        <option value="non" {% if hors_delai_filtre == 'non' %}selected{% endif %}>Dans les délais</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-1">
+                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-filter"></i></button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-sortable">
+                    <thead>
+                        <tr>
+                            <th>N° sollicitation</th><th>Client</th><th>Segment</th><th>Nature</th>
+                            <th>Canal</th><th>Statut</th><th>Créée le</th><th>Délai (j)</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reclamations %}
+                            <tr class="{% if r.delai_traitement and r.delai_traitement > seuil_hors_delai %}table-danger{% endif %}">
+                                <td>{{ r.numero_sollicitation|default:"—" }}</td>
+                                <td>
+                                    {% if r.client %}
+                                        <a href="{% url 'clients:detail_client' r.client.idabon %}">{{ r.client.nom_prenoms|default:r.client.idabon }}</a>
+                                    {% else %}{{ r.nom_client|default:"—" }}{% endif %}
+                                </td>
+                                <td>{{ r.segment_client|default:"—" }}</td>
+                                <td>{{ r.nature_reclamation|default:"—" }}</td>
+                                <td>{{ r.canal|default:"—" }}</td>
+                                <td>{{ r.statut|default:"—" }}</td>
+                                <td>{{ r.date_creation|default:"—" }}</td>
+                                <td>
+                                    {% if r.delai_traitement is not None %}
+                                        {{ r.delai_traitement }}
+                                        {% if r.delai_traitement > seuil_hors_delai %}<span class="badge badge-danger ml-1">Hors Délai</span>{% endif %}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td>
+                                    {% if r.client %}
+                                        <a href="{% url 'clients:detail_client' r.client.idabon %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-eye"></i></a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="9" class="text-center text-muted">Aucune réclamation.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if page_obj.paginator.num_pages > 1 %}
+                <nav><ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&statut={{ statut_filtre }}&canal={{ canal_filtre }}&segment={{ segment_filtre }}&hors_delai={{ hors_delai_filtre }}">Précédent</a></li>{% endif %}
+                    <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&statut={{ statut_filtre }}&canal={{ canal_filtre }}&segment={{ segment_filtre }}&hors_delai={{ hors_delai_filtre }}">Suivant</a></li>{% endif %}
+                </ul></nav>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

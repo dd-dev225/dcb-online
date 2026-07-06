@@ -1,0 +1,325 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}Pilotage Activité Business HTA{% endblock %} : DCB</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,800" rel="stylesheet">
+    <link href="{% static 'dashboards/vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'dashboards/css/cie-admin-2.min.css' %}" rel="stylesheet">
+    <link href="{% static 'dashboards/css/cie-theme.css' %}" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+<body id="page-top" class="fixed-nav">
+<div id="wrapper">
+
+    <!-- Sidebar -->
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+        <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{% url 'dashboards:home' %}">
+            <div class="sidebar-brand-logo">
+                <img src="{% static 'dashboards/img/on_line_r.png' %}" alt="DCB">
+            </div>
+        </a>
+        <hr class="sidebar-divider my-0">
+
+        <li class="nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'dashboards:home' %}">
+                <i class="fas fa-fw fa-tachometer-alt"></i>
+                <span>Tableau de bord</span></a>
+        </li>
+
+        <li class="nav-item {% if request.resolver_match.url_name == 'objectifs' or request.resolver_match.url_name == 'gerer_objectifs' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'dashboards:objectifs' %}">
+                <i class="fas fa-fw fa-bullseye"></i>
+                <span>Objectifs</span></a>
+        </li>
+
+        <li class="nav-item {% if request.resolver_match.app_name == 'messagerie' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'messagerie:boite_reception' %}">
+                <i class="fas fa-fw fa-envelope"></i>
+                <span>Messages{% if nb_messages_non_lus %} <span class="badge badge-danger">{{ nb_messages_non_lus }}</span>{% endif %}</span></a>
+        </li>
+
+        <hr class="sidebar-divider">
+        <div class="sidebar-heading">Performance &amp; Engagement</div>
+
+        {% if is_direction %}
+            <li class="nav-item {% if request.resolver_match.url_name == 'performance_direction' %}active{% endif %}">
+                <a class="nav-link" href="{% url 'dashboards:performance_direction' %}">
+                    <i class="fas fa-fw fa-chart-line"></i>
+                    <span>Performance : Direction</span></a>
+            </li>
+            <li class="nav-item {% if request.resolver_match.url_name == 'engagement_direction' %}active{% endif %}">
+                <a class="nav-link" href="{% url 'dashboards:engagement_direction' %}">
+                    <i class="fas fa-fw fa-handshake"></i>
+                    <span>Engagement : Direction</span></a>
+            </li>
+        {% else %}
+            <li class="nav-item {% if request.resolver_match.url_name == 'performance_entite' %}active{% endif %}">
+                <a class="nav-link" href="{% url 'dashboards:performance_entite' %}">
+                    <i class="fas fa-fw fa-chart-line"></i>
+                    <span>Performance : {{ entite|default:"mon entité" }}</span></a>
+            </li>
+            <li class="nav-item {% if request.resolver_match.url_name == 'engagement_entite' %}active{% endif %}">
+                <a class="nav-link" href="{% url 'dashboards:engagement_entite' %}">
+                    <i class="fas fa-fw fa-handshake"></i>
+                    <span>Engagement : {{ entite|default:"mon entité" }}</span></a>
+            </li>
+        {% endif %}
+        <li class="nav-item {% if request.resolver_match.app_name == 'reclamations' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'reclamations:liste_reclamations' %}">
+                <i class="fas fa-fw fa-comment-dots"></i>
+                <span>Réclamations</span></a>
+        </li>
+
+        {% if is_direction or is_support_technique %}
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">Support Technique</div>
+            <li class="nav-item {% if request.resolver_match.app_name == 'reseau' and request.resolver_match.url_name != 'liste_fiches_qualite' and request.resolver_match.url_name != 'detail_fiche_qualite' and request.resolver_match.url_name != 'generer_lien_qualite' %}active{% endif %}">
+                <a class="nav-link" href="{% url 'reseau:dashboard' %}">
+                    <i class="fas fa-fw fa-bolt"></i>
+                    <span>Qualité du réseau</span></a>
+            </li>
+            <li class="nav-item {% if request.resolver_match.url_name == 'liste_fiches_qualite' or request.resolver_match.url_name == 'detail_fiche_qualite' or request.resolver_match.url_name == 'generer_lien_qualite' %}active{% endif %}">
+                <a class="nav-link" href="{% url 'reseau:liste_fiches_qualite' %}">
+                    <i class="fas fa-fw fa-clipboard-list"></i>
+                    <span>Qualité de Fourniture</span></a>
+            </li>
+        {% endif %}
+
+        {% if is_direction or is_guichet_unique %}
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">Guichet Unique</div>
+            <li class="nav-item {% if request.resolver_match.url_name == 'prospection_guichet_unique' %}active{% endif %}">
+                <a class="nav-link" href="{% url 'dashboards:prospection_guichet_unique' %}">
+                    <i class="fas fa-fw fa-city"></i>
+                    <span>Prospection immobilière</span></a>
+            </li>
+            <li class="nav-item {% if request.resolver_match.url_name == 'calendrier_visites' or request.resolver_match.url_name == 'planning_visites' %}active{% endif %}">
+                <a class="nav-link" href="{% url 'prospection:calendrier_visites' %}">
+                    <i class="fas fa-fw fa-calendar-day"></i>
+                    <span>Agenda / Planning</span></a>
+            </li>
+        {% endif %}
+
+        {% if is_sdrcb or is_direction %}
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">Relation Clients Business</div>
+            {% if is_sdrcb %}
+                <li class="nav-item {% if request.resolver_match.url_name == 'liste_portefeuille' or request.resolver_match.url_name == 'fiche_client' %}active{% endif %}">
+                    <a class="nav-link" href="{% url 'clients:liste_portefeuille' %}">
+                        <i class="fas fa-fw fa-address-book"></i>
+                        <span>Portefeuille clients</span></a>
+                </li>
+            {% endif %}
+            {% if is_direction or is_service_strategiques %}
+                <li class="nav-item {% if request.resolver_match.url_name == 'liste_strategiques_non_rattaches' %}active{% endif %}">
+                    <a class="nav-link" href="{% url 'clients:liste_strategiques_non_rattaches' %}">
+                        <i class="fas fa-fw fa-exclamation-triangle"></i>
+                        <span>Stratégiques non rattachés</span></a>
+                </li>
+            {% endif %}
+        {% endif %}
+
+        <hr class="sidebar-divider d-none d-md-block">
+        <div class="text-center d-none d-md-inline">
+            <button class="rounded-circle border-0" id="sidebarToggle"></button>
+        </div>
+    </ul>
+    <!-- End of Sidebar -->
+
+    <div id="content-wrapper" class="d-flex flex-column">
+        <div id="content">
+
+            <!-- Topbar : pas de .shadow ici, la topbar est en position:fixed
+                 (cf. cie-theme.css), donc son ombre (flou 1.75rem) reste TOUJOURS
+                 visible en haut du contenu, même après défilement, créant une
+                 bande grise permanente sous la topbar (retour utilisateur
+                 explicite). La bordure orange (.topbar{border-bottom}) suffit à
+                 la séparer visuellement du contenu. -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top">
+                <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                    <i class="fa fa-bars"></i>
+                </button>
+
+                {% if request.resolver_match.url_name != 'home' %}
+                    <a href="{% url 'dashboards:home' %}" class="d-flex align-items-center text-gray-700 font-weight-bold mr-3">
+                        <i class="fas fa-arrow-left mr-2"></i> Retour au tableau de bord
+                    </a>
+                {% endif %}
+
+                {% if peut_chercher_client %}
+                    <form method="get" action="{% url 'clients:liste_financiere' %}"
+                          class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                        <div class="input-group">
+                            <input type="text" name="q" class="form-control bg-light border-0 small"
+                                   placeholder="Rechercher un client (IDABON ou nom)...">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search fa-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                {% endif %}
+
+                <ul class="navbar-nav ml-auto">
+                    {% if peut_chercher_client %}
+                        <li class="nav-item dropdown no-arrow d-sm-none">
+                            <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
+                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-search fa-fw"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in" aria-labelledby="searchDropdown">
+                                <form method="get" action="{% url 'clients:liste_financiere' %}" class="form-inline mr-auto w-100 navbar-search">
+                                    <div class="input-group">
+                                        <input type="text" name="q" class="form-control bg-light border-0 small" placeholder="Rechercher un client...">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-primary" type="submit"><i class="fas fa-search fa-sm"></i></button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </li>
+
+                        <!-- Une seule cloche pour tout ce qui est "à regarder" côté SDRCB/Direction :
+                             actions en attente ET activité récente, plutôt que deux icônes distinctes
+                             dont la différence n'était pas évidente d'un coup d'œil (retour utilisateur). -->
+                        <li class="nav-item dropdown no-arrow mx-1">
+                            <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button"
+                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                               title="Alertes et activité récente">
+                                <i class="fas fa-bell fa-fw"></i>
+                                {% if nb_alertes_total %}
+                                    <span class="badge badge-danger badge-counter">{{ nb_alertes_total }}</span>
+                                {% endif %}
+                            </a>
+                            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="alertsDropdown">
+                                <h6 class="dropdown-header">Alertes</h6>
+                                {% for alerte in alertes_navbar %}
+                                    <a class="dropdown-item d-flex align-items-center" href="{% url alerte.url %}">
+                                        <div class="mr-3">
+                                            <div class="icon-circle bg-{{ alerte.couleur }}">
+                                                <i class="fas {{ alerte.icone }} text-white"></i>
+                                            </div>
+                                        </div>
+                                        <div class="small font-weight-bold">{{ alerte.label }}</div>
+                                    </a>
+                                {% empty %}
+                                    <span class="dropdown-item-text small text-gray-500">Aucune alerte en attente.</span>
+                                {% endfor %}
+                                <h6 class="dropdown-header">Activité récente : fiches clients</h6>
+                                {% for item in activite_recente_navbar %}
+                                    <a class="dropdown-item d-flex align-items-center" href="{% url 'clients:fiche_client' item.idabon %}">
+                                        <div>
+                                            <div class="text-truncate font-weight-bold">{{ item.nom }}</div>
+                                            <div class="small text-gray-500">{{ item.maj_par }} · {{ item.maj_le|timesince }}</div>
+                                        </div>
+                                    </a>
+                                {% empty %}
+                                    <span class="dropdown-item-text small text-gray-500">Aucune activité récente.</span>
+                                {% endfor %}
+                            </div>
+                        </li>
+                    {% endif %}
+
+                    <!-- Messages entre entités : pas de condition peut_chercher_client ici, ouvert à tout le monde. -->
+                    <li class="nav-item dropdown no-arrow mx-1">
+                        <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button"
+                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-envelope fa-fw"></i>
+                            {% if nb_messages_non_lus %}
+                                <span class="badge badge-danger badge-counter">{{ nb_messages_non_lus }}</span>
+                            {% endif %}
+                        </a>
+                        <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="messagesDropdown">
+                            <h6 class="dropdown-header">Messages</h6>
+                            {% for message in messages_recents_navbar %}
+                                <a class="dropdown-item d-flex align-items-center" href="{% url 'messagerie:lire_message' message.pk %}">
+                                    <div>
+                                        <div class="font-weight-bold">{{ message.entite_expeditrice }}</div>
+                                        <div class="text-truncate small">{{ message.contenu }}</div>
+                                        <div class="small text-gray-500">{{ message.envoye_le|timesince }}</div>
+                                    </div>
+                                </a>
+                            {% empty %}
+                                <span class="dropdown-item-text small text-gray-500">Aucun message.</span>
+                            {% endfor %}
+                            <a class="dropdown-item text-center small text-gray-500" href="{% url 'messagerie:boite_reception' %}">Voir tous les messages</a>
+                        </div>
+                    </li>
+
+                    <div class="topbar-divider d-none d-sm-block"></div>
+                    <li class="nav-item dropdown no-arrow">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            {% if request.user.profile.photo_url %}
+                                <img src="{{ request.user.profile.photo_url }}" alt="Photo de profil"
+                                     class="rounded-circle" style="width: 2rem; height: 2rem; object-fit: cover;">
+                            {% else %}
+                                <i class="fas fa-user-circle fa-2x text-gray-300"></i>
+                            {% endif %}
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                            <span class="dropdown-item-text small text-gray-500">
+                                Entité : {{ entite|default:"—" }}
+                            </span>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{% url 'comptes:profile' %}">
+                                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Mon profil
+                            </a>
+                            {% if a_parametres_perimetre %}
+                                <a class="dropdown-item" href="{% url 'comptes:parametres' %}">
+                                    <i class="fas fa-sliders-h fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Mes paramètres
+                                </a>
+                            {% endif %}
+                            <div class="dropdown-divider"></div>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Déconnexion
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+            <!-- End of Topbar -->
+
+            <div class="container-fluid">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Fermer"><span aria-hidden="true">&times;</span></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+
+        <footer class="sticky-footer bg-white">
+            <div class="container my-auto">
+                <div class="copyright text-center my-auto">
+                    <span>Direction Commerciale Business : Prototype de pilotage (mémoire)</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<script src="{% static 'dashboards/vendor/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'dashboards/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'dashboards/vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+<script src="{% static 'dashboards/js/sb-admin-2.min.js' %}"></script>
+<script src="{% static 'dashboards/js/sortable-tables.js' %}"></script>
+<script src="{% static 'dashboards/js/iframe-autoheight.js' %}"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

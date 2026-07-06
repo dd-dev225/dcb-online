@@ -1,0 +1,38 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Nouveau message{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-paper-plane mr-2 text-primary"></i>Nouveau message</h1>
+        <a href="{% url 'messagerie:boite_reception' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm mr-1"></i>Retour à la boîte de réception
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            {% if entites_contactables %}
+                <p class="text-gray-600">
+                    Vous pouvez écrire à votre hiérarchie directe : les entités au-dessus de la vôtre
+                    et les entités sous votre responsabilité.
+                </p>
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+                    <div class="form-group">
+                        <label>{{ form.entite_destinataire.label }}</label>
+                        {{ form.entite_destinataire }}
+                        {% if form.entite_destinataire.errors %}<div class="text-danger small mt-1">{{ form.entite_destinataire.errors|join:" " }}</div>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label>{{ form.contenu.label }}</label>
+                        {{ form.contenu }}
+                        {% if form.contenu.errors %}<div class="text-danger small mt-1">{{ form.contenu.errors|join:" " }}</div>{% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane mr-1"></i>Envoyer</button>
+                </form>
+            {% else %}
+                <p class="text-muted">Aucune entité à contacter pour le moment.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

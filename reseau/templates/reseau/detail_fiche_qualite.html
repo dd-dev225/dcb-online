@@ -1,0 +1,163 @@
+{% extends "dashboards/base.html" %}
+{% block title %}{{ fiche.nom_entreprise }} : Fiche Qualité{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-bolt mr-2 text-primary"></i>{{ fiche.nom_entreprise }}
+            {% if fiche.statut == "nouveau" %}<span class="badge badge-info ml-2">Nouveau</span>
+            {% elif fiche.statut == "en_cours" %}<span class="badge badge-warning ml-2">En cours</span>
+            {% else %}<span class="badge badge-success ml-2">Traité</span>{% endif %}
+        </h1>
+        <a href="{% url 'reseau:liste_fiches_qualite' %}" class="btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm mr-1"></i>Retour à la liste
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">2. Informations générales du client</h6></div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr><th class="text-muted" style="width:45%">Entreprise</th><td>{{ fiche.nom_entreprise }}</td></tr>
+                        <tr><th class="text-muted">Client (portefeuille)</th><td>
+                            {% if fiche.client %}<a href="{% url 'clients:detail_client' fiche.client.idabon %}">{{ fiche.client.nom_prenoms|default:fiche.client.idabon }}</a>{% else %}<span class="text-muted">Non rattaché</span>{% endif %}
+                        </td></tr>
+                        <tr><th class="text-muted">Correspondant technique</th><td>{{ fiche.nom_correspondant }}</td></tr>
+                        <tr><th class="text-muted">Téléphone</th><td>{{ fiche.telephone }}</td></tr>
+                        <tr><th class="text-muted">Email</th><td>
+                            {{ fiche.email|default:"—" }}
+                            {% if fiche.email %}
+                                <a href="mailto:{{ fiche.email|urlencode }}?subject=CIE%20Support%20Technique%20%3A%20{{ fiche.nom_entreprise|urlencode }}"
+                                   class="btn btn-sm btn-outline-info ml-1" title="Écrire via Outlook"><i class="fas fa-envelope"></i></a>
+                            {% endif %}
+                        </td></tr>
+                        <tr><th class="text-muted">GPS</th><td>{% if fiche.gps_latitude %}{{ fiche.gps_latitude }}, {{ fiche.gps_longitude }}{% else %}—{% endif %}</td></tr>
+                        <tr><th class="text-muted">Soumis le</th><td>{{ fiche.soumis_le|date:"d/m/Y H:i" }}</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">4. Éléments de constat</h6></div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        {% for m in fiche.methode_constat_libelles %}<span class="badge badge-secondary mr-1">{{ m }}</span>{% endfor %}
+                    </p>
+                    <table class="table table-sm mb-0">
+                        {% if fiche.obs_visuelle %}<tr><th class="text-muted" style="width:45%">Observation à l'œil nu</th><td>{{ fiche.obs_visuelle }}</td></tr>{% endif %}
+                        {% if fiche.obs_appareil %}<tr><th class="text-muted">Appareil de mesure</th><td>{{ fiche.obs_appareil }}</td></tr>{% endif %}
+                        {% if fiche.obs_enregistrement %}<tr><th class="text-muted">Enregistrement automatique</th><td>{{ fiche.obs_enregistrement }}</td></tr>{% endif %}
+                        {% if fiche.obs_autre_constat %}<tr><th class="text-muted">Autre méthode</th><td>{{ fiche.obs_autre_constat }}</td></tr>{% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">6. Fréquence &amp; 7. Conditions</h6></div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr><th class="text-muted" style="width:45%">Fréquence</th><td>{{ fiche.get_frequence_phenomene_display|default:"—" }}</td></tr>
+                        {% if fiche.frequence_detail %}<tr><th class="text-muted">Précisions</th><td>{{ fiche.frequence_detail }}</td></tr>{% endif %}
+                        <tr><th class="text-muted">Conditions</th><td>
+                            {% for c in fiche.conditions_constat_libelles %}<span class="badge badge-secondary mr-1">{{ c }}</span>{% empty %}—{% endfor %}
+                        </td></tr>
+                        {% if fiche.conditions_detail %}<tr><th class="text-muted">Précisions</th><td>{{ fiche.conditions_detail }}</td></tr>{% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">3. Événements déclarés ({{ fiche.evenements.count }})</h6></div>
+                <div class="card-body">
+                    {% for e in fiche.evenements.all %}
+                        <div class="{% if not forloop.last %}border-bottom pb-2 mb-2{% endif %}">
+                            <div class="font-weight-bold">{{ e.date|date:"d/m/Y" }}
+                                {% if e.heure_debut %}, {{ e.heure_debut|time:"H:i" }}{% if e.heure_fin %} à {{ e.heure_fin|time:"H:i" }}{% endif %}{% endif %}
+                            </div>
+                            <div>
+                                {% for p in e.phenomenes_libelles %}<span class="badge badge-warning mr-1">{{ p }}</span>{% endfor %}
+                            </div>
+                            {% if e.autre_description %}<div class="small text-muted">{{ e.autre_description }}</div>{% endif %}
+                        </div>
+                    {% empty %}
+                        <p class="text-muted mb-0">Aucun événement déclaré.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">5. Relevés de tension ({{ fiche.releves_tension.count }})</h6></div>
+                <div class="card-body">
+                    {% if fiche.releves_tension.all %}
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <thead><tr><th>Date</th><th>U12</th><th>U23</th><th>U31</th><th>V1</th><th>V2</th><th>V3</th><th>Appareil</th></tr></thead>
+                                <tbody>
+                                    {% for t in fiche.releves_tension.all %}
+                                        <tr>
+                                            <td>{{ t.date|date:"d/m/Y"|default:"—" }}{% if t.heure %} {{ t.heure|time:"H:i" }}{% endif %}</td>
+                                            <td>{{ t.u12|default:"—" }}</td><td>{{ t.u23|default:"—" }}</td><td>{{ t.u31|default:"—" }}</td>
+                                            <td>{{ t.v1|default:"—" }}</td><td>{{ t.v2|default:"—" }}</td><td>{{ t.v3|default:"—" }}</td>
+                                            <td>{{ t.appareil_mesure|default:"—" }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">Aucun relevé de tension joint.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if fiche.documents_joints or fiche.photo_jointe or fiche.rapport_joint %}
+                <div class="card mb-4">
+                    <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">8. Documents joints</h6></div>
+                    <div class="card-body">
+                        <p class="mb-2">{% for d in fiche.documents_joints_libelles %}<span class="badge badge-secondary mr-1">{{ d }}</span>{% endfor %}</p>
+                        {% if fiche.photo_jointe %}<p><a href="{{ fiche.photo_jointe.url }}" target="_blank"><i class="fas fa-image mr-1"></i>Photo jointe</a></p>{% endif %}
+                        {% if fiche.rapport_joint %}<p><a href="{{ fiche.rapport_joint.url }}" target="_blank"><i class="fas fa-file mr-1"></i>Rapport joint</a></p>{% endif %}
+                        {% if fiche.documents_observations %}<p class="mb-0 text-muted">{{ fiche.documents_observations }}</p>{% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if fiche.observations_finales %}
+                <div class="card mb-4">
+                    <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">9. Observations complémentaires</h6></div>
+                    <div class="card-body"><p class="mb-0">{{ fiche.observations_finales|linebreaksbr }}</p></div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Traitement Support Technique</h6></div>
+        <div class="card-body">
+            {% if fiche.traite_par %}
+                <p class="small text-muted">Dernière mise à jour par {{ fiche.traite_par.get_full_name|default:fiche.traite_par.username }} le {{ fiche.traite_le|date:"d/m/Y H:i" }}.</p>
+            {% endif %}
+            <form method="post" class="form-row align-items-end">
+                {% csrf_token %}
+                <div class="form-group col-md-3">
+                    <label>Statut</label>
+                    <select name="statut" class="form-control">
+                        <option value="nouveau" {% if fiche.statut == "nouveau" %}selected{% endif %}>Nouveau</option>
+                        <option value="en_cours" {% if fiche.statut == "en_cours" %}selected{% endif %}>En cours d'analyse</option>
+                        <option value="traite" {% if fiche.statut == "traite" %}selected{% endif %}>Traité</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-7">
+                    <label>Note de traitement</label>
+                    <input type="text" name="note_traitement" value="{{ fiche.note_traitement }}" class="form-control">
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-save mr-1"></i>Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

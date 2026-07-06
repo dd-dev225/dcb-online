@@ -1,0 +1,149 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Planning de visites{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-calendar-alt mr-2 text-primary"></i>Planning de visites — {{ trimestre }} {{ annee }}</h1>
+        <div>
+            <a href="{% url 'prospection:calendrier_visites' %}" class="btn btn-sm btn-primary shadow-sm"><i class="fas fa-calendar-day fa-sm mr-1"></i>Agenda</a>
+            <a href="{% url 'prospection:exporter_planning' %}?annee={{ annee }}&trimestre={{ trimestre }}" class="btn btn-sm btn-success shadow-sm"><i class="fas fa-file-excel fa-sm mr-1"></i>Exporter</a>
+            <a href="{% url 'prospection:liste_operateurs' %}" class="btn btn-sm btn-info shadow-sm"><i class="fas fa-user-friends fa-sm mr-1"></i>Opérateurs</a>
+            <a href="{% url 'prospection:liste_prospects' %}" class="btn btn-sm btn-secondary shadow-sm"><i class="fas fa-building fa-sm mr-1"></i>Immeubles</a>
+        </div>
+    </div>
+
+    <form method="get" class="form-inline mb-3">
+        <select name="trimestre" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+            {% for code, libelle in trimestres %}<option value="{{ code }}" {% if code == trimestre %}selected{% endif %}>{{ libelle }}</option>{% endfor %}
+        </select>
+        <input type="number" name="annee" value="{{ annee }}" class="form-control form-control-sm mr-2" style="width:100px" onchange="this.form.submit()">
+    </form>
+
+    <div class="row">
+        <div class="col-md-3"><div class="card border-left-primary shadow py-2 mb-4"><div class="card-body">
+            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Visites planifiées</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div></div></div></div>
+        <div class="col-md-3"><div class="card border-left-success shadow py-2 mb-4"><div class="card-body">
+            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Réalisées</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.realisees }} <span class="small text-gray-500">({{ stats.taux|floatformat:0 }}%)</span></div></div></div></div>
+        <div class="col-md-3"><div class="card border-left-warning shadow py-2 mb-4"><div class="card-body">
+            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Opérateurs prioritaires</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.operateurs_prioritaires }}</div></div></div></div>
+        <div class="col-md-3"><div class="card border-left-info shadow py-2 mb-4"><div class="card-body">
+            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Prioritaires couverts</div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.operateurs_couverts }} / {{ stats.operateurs_prioritaires }}</div></div></div></div>
+    </div>
+
+    <!-- Recherche par nom (demande utilisateur) : sans recherche, les listes sont
+         bornées à 100 pour rester praticables ; une recherche narrows sans limite,
+         que ce soit pour PLANIFIER une visite ou simplement RETROUVER un opérateur/
+         immeuble. Recherche server-side (pas de JS) : soumet le formulaire GET et
+         ne recharge que les <select> concernés. -->
+    <div class="card mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Rechercher un opérateur ou un immeuble</h6></div>
+        <div class="card-body">
+            <form method="get" class="form-row align-items-end">
+                <input type="hidden" name="annee" value="{{ annee }}">
+                <input type="hidden" name="trimestre" value="{{ trimestre }}">
+                <div class="form-group col-md-5">
+                    <label>Opérateur</label>
+                    <input type="text" name="q_operateur" value="{{ q_operateur }}" class="form-control" placeholder="Nom de l'opérateur…">
+                </div>
+                <div class="form-group col-md-5">
+                    <label>Immeuble</label>
+                    <input type="text" name="q_immeuble" value="{{ q_immeuble }}" class="form-control" placeholder="Nom de l'immeuble…">
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-search mr-1"></i>Chercher</button>
+                </div>
+            </form>
+            {% if q_operateur or q_immeuble %}
+                <p class="small text-muted mb-0 mt-2">
+                    {{ operateurs_dispo|length }} opérateur(s), {{ immeubles_dispo|length }} immeuble(s) trouvé(s) — sélectionnez la cible ci-dessous puis planifiez.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Planifier une visite</h6></div>
+        <div class="card-body">
+            <form method="post" class="form-row align-items-end">
+                {% csrf_token %}
+                <div class="form-group col-md-6">
+                    <label>Opérateur (ou immeuble ci-dessous)</label>
+                    <select name="operateur" class="form-control">
+                        <option value="">—</option>
+                        {% for op in operateurs_dispo %}<option value="{{ op.pk }}" {% if operateur_preselectionne == op.pk|stringformat:"s" %}selected{% endif %}>{{ op.nom }} ({{ op.get_ccgc_display }})</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-6">
+                    <label>Immeuble (ou opérateur ci-dessus)</label>
+                    <select name="immeuble" class="form-control">
+                        <option value="">—</option>
+                        {% for im in immeubles_dispo %}<option value="{{ im.pk }}" {% if immeuble_preselectionne == im.pk|stringformat:"s" %}selected{% endif %}>{{ im.nom_structure }}{% if im.zone_prospection %} — {{ im.zone_prospection }}{% endif %}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Direction Régionale</label>
+                    <select name="direction_regionale" class="form-control">
+                        <option value="">Auto (déduite de la cible)</option>
+                        {% for dr in directions_regionales %}<option value="{{ dr.pk }}">{{ dr.code }} — {{ dr.libelle }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Commune / Quartier</label>
+                    <input type="text" name="commune_quartier" class="form-control" placeholder="Laisser vide = auto">
+                </div>
+                <div class="form-group col-md-2">
+                    <label>Mois prévu</label>
+                    <input type="number" name="mois_prevu" min="1" max="12" class="form-control">
+                </div>
+                <div class="form-group col-md-2">
+                    <label>Date prévue</label>
+                    <input type="date" name="date_prevue" class="form-control">
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary btn-block">Planifier</button>
+                </div>
+            </form>
+            <p class="small text-muted mb-0">La DR et la commune/quartier sont déduites automatiquement de la cible choisie si vous les laissez vides.</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-sortable">
+                    <thead><tr><th>Cible</th><th>DR</th><th>Commune / Quartier</th><th>Mois prévu</th><th>Date prévue</th><th>Date réalisée</th><th>Commercial</th><th></th></tr></thead>
+                    <tbody>
+                        {% for v in visites %}
+                            <tr class="{% if not v.est_realisee %}table-warning{% endif %}">
+                                <td>{{ v.cible_nom }} {% if v.operateur_id %}<span class="badge badge-secondary">Opérateur</span>{% else %}<span class="badge badge-light">Immeuble</span>{% endif %}</td>
+                                <td>{{ v.direction_regionale.code|default:"—" }}</td>
+                                <td>{{ v.commune_quartier|default:"—" }}</td>
+                                <td>{{ v.mois_prevu|default:"—" }}</td>
+                                <td>{{ v.date_prevue|default:"—" }}</td>
+                                <td>{{ v.date_realisee|default:"—" }}</td>
+                                <td>{{ v.commercial.username|default:"—" }}</td>
+                                <td>
+                                    {% if not v.est_realisee %}
+                                        <form method="post" class="form-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="marquer_realisee" value="{{ v.pk }}">
+                                            <input type="date" name="date_realisee" class="form-control form-control-sm mr-1" style="width:140px">
+                                            <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check"></i> Réalisée</button>
+                                        </form>
+                                    {% else %}
+                                        <span class="badge badge-success">Réalisée</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="8" class="text-center text-muted">Aucune visite planifiée pour ce trimestre.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

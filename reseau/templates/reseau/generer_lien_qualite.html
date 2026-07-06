@@ -1,0 +1,104 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Générer un lien Qualité de Fourniture{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-link mr-2 text-primary"></i>Générer un lien de collecte</h1>
+        <a href="{% url 'reseau:liste_fiches_qualite' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm mr-1"></i>Fiches reçues
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Rattacher le lien à un client (facultatif)</h6></div>
+        <div class="card-body">
+            <form method="get" class="form-row align-items-end mb-3">
+                <div class="form-group col-md-6">
+                    <label>Rechercher un client (IDABON ou nom)</label>
+                    <input type="text" name="q" value="{{ recherche }}" class="form-control" placeholder="Ex: SIVOA">
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-search"></i></button>
+                </div>
+            </form>
+
+            {% if recherche %}
+                <div class="table-responsive mb-3">
+                    <table class="table table-sm table-hover">
+                        <thead><tr><th>IDABON</th><th>Nom</th><th></th></tr></thead>
+                        <tbody>
+                            {% for c in clients_trouves %}
+                                <tr>
+                                    <td>{{ c.idabon }}</td>
+                                    <td>{{ c.nom_prenoms|default:"—" }}</td>
+                                    <td>
+                                        <form method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="client_idabon" value="{{ c.idabon }}">
+                                            <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-link mr-1"></i>Générer le lien</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted">Aucun client trouvé.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-secondary"><i class="fas fa-globe mr-1"></i>Générer un lien générique (sans client)</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Liens récemment générés</h6></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead><tr><th>Client</th><th>Lien</th><th>Généré le</th><th>Fiches reçues</th><th></th></tr></thead>
+                    <tbody>
+                        {% for lien in liens %}
+                            <tr>
+                                <td>{{ lien.client.nom_prenoms|default:"Générique" }}</td>
+                                <td>
+                                    <input type="text" readonly value="{{ lien.url_absolue }}" class="form-control form-control-sm lien-input" style="max-width: 320px; display: inline-block;">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-copier-lien" data-lien="{{ lien.url_absolue }}" title="Copier le lien">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    {% if lien.email_destinataire %}
+                                        <a href="mailto:{{ lien.email_destinataire|urlencode }}?subject=CIE%20%3A%20Fiche%20Qualit%C3%A9%20de%20Fourniture&body={{ lien.url_absolue|urlencode }}"
+                                           class="btn btn-sm btn-outline-info" title="Envoyer via Outlook à {{ lien.email_destinataire }}">
+                                            <i class="fas fa-envelope"></i>
+                                        </a>
+                                    {% endif %}
+                                </td>
+                                <td>{{ lien.cree_le|date:"d/m/Y H:i" }}</td>
+                                <td>{{ lien.nb_fiches }}</td>
+                                <td>{% if not lien.actif %}<span class="badge badge-secondary">Inactif</span>{% else %}<span class="badge badge-success">Actif</span>{% endif %}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted">Aucun lien généré pour l'instant.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.querySelectorAll('.btn-copier-lien').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        navigator.clipboard.writeText(btn.getAttribute('data-lien')).then(function () {
+            var icon = btn.querySelector('i');
+            icon.classList.remove('fa-copy');
+            icon.classList.add('fa-check');
+            setTimeout(function () { icon.classList.remove('fa-check'); icon.classList.add('fa-copy'); }, 1500);
+        });
+    });
+});
+</script>
+{% endblock %}

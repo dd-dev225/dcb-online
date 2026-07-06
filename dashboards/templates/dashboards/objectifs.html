@@ -1,0 +1,44 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Objectifs{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-bullseye mr-2 text-primary"></i>Objectifs de mon entité</h1>
+        {% if peut_gerer %}
+            <a href="{% url 'dashboards:gerer_objectifs' %}" class="btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-sliders-h fa-sm mr-1"></i>Définir les objectifs
+            </a>
+        {% endif %}
+    </div>
+
+    {% if objectifs %}
+        <div class="row">
+            {% for o in objectifs %}
+                <div class="col-lg-6">
+                    <div class="card shadow mb-4 {% if o.atteint is True %}border-left-success{% elif o.atteint is False %}border-left-danger{% else %}border-left-secondary{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-xs font-weight-bold text-uppercase mb-1 text-gray-600">{{ o.libelle }}</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {% if o.realise is not None %}{{ o.realise|floatformat:1 }}{% else %}—{% endif %}
+                                        <span class="text-gray-500 small"> / cible {{ o.cible|floatformat:1 }}</span>
+                                    </div>
+                                    <div class="small text-gray-500">Objectif fixé pour : {{ o.entite }}</div>
+                                </div>
+                                <div>
+                                    {% if o.atteint is True %}<span class="badge badge-success p-2"><i class="fas fa-check"></i> Atteint</span>
+                                    {% elif o.atteint is False %}<span class="badge badge-danger p-2"><i class="fas fa-times"></i> Non atteint</span>
+                                    {% else %}<span class="badge badge-secondary p-2">—</span>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card shadow"><div class="card-body text-center text-muted">
+            Aucun objectif défini pour votre entité pour le moment.
+        </div></div>
+    {% endif %}
+{% endblock %}

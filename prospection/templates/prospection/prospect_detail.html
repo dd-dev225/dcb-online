@@ -1,0 +1,123 @@
+{% extends "dashboards/base.html" %}
+{% block title %}{{ immeuble.nom_structure|default:"Prospect" }} — Détail{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-building mr-2 text-primary"></i>{{ immeuble.nom_structure|default:"(Sans nom)" }}
+            {% if immeuble.est_cible_prioritaire %}
+                <span class="badge badge-warning ml-2">Cible prioritaire (R+{{ immeuble.nb_niveaux }})</span>
+            {% endif %}
+        </h1>
+        <div>
+            <a href="{% url 'prospection:liste_prospects' %}" class="btn btn-sm btn-secondary shadow-sm">
+                <i class="fas fa-arrow-left fa-sm mr-1"></i>Retour à la liste
+            </a>
+            {% if peut_modifier %}
+                <a href="{% url 'prospection:modifier_prospect' immeuble.pk %}" class="btn btn-sm btn-primary shadow-sm">
+                    <i class="fas fa-edit fa-sm mr-1"></i>Modifier
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Identification</h6></div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr><th class="text-muted" style="width:45%">Structure</th><td>{{ immeuble.nom_structure|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Type de cible</th><td>{{ immeuble.get_type_cible_display|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Constructeur</th><td>{{ immeuble.constructeur|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Interlocuteur</th><td>{{ immeuble.interlocuteur|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Fonction</th><td>{{ immeuble.fonction_interlocuteur|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Contact</th><td>{{ immeuble.contact|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Email</th><td>
+                            {{ immeuble.email|default:"—" }}
+                            {% if immeuble.email %}
+                                <a href="mailto:{{ immeuble.email|urlencode }}?subject=CIE%20Guichet%20Unique%20%3A%20{{ immeuble.nom_structure|urlencode }}"
+                                   class="btn btn-sm btn-outline-info ml-1" title="Écrire via Outlook"><i class="fas fa-envelope"></i></a>
+                            {% endif %}
+                        </td></tr>
+                        <tr><th class="text-muted">Date de visite</th><td>{{ immeuble.date_visite|default:"—" }}</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Localisation</h6></div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr><th class="text-muted" style="width:45%">Situation géographique</th><td>{{ immeuble.situation_geographique|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Quartier / Zone</th><td>{{ immeuble.zone_prospection|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">DEX</th><td>{{ immeuble.get_dex_display|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Direction Régionale</th><td>{% if immeuble.direction_regionale %}{{ immeuble.direction_regionale.code }} — {{ immeuble.direction_regionale.libelle }}{% else %}—{% endif %}</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Construction &amp; avancement</h6></div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr><th class="text-muted" style="width:45%">Type de construction</th><td>{{ immeuble.get_type_construction_display|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Hauteur</th><td>{% if immeuble.nb_niveaux %}R+{{ immeuble.nb_niveaux }}{% else %}—{% endif %}</td></tr>
+                        <tr><th class="text-muted">Appartements / Bureaux</th><td>{{ immeuble.nb_appartements_bureaux|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Détails construction</th><td>{{ immeuble.details_construction|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Stade d'avancement</th><td>{{ immeuble.get_stade_avancement_display|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Début des travaux</th><td>{{ immeuble.date_debut_travaux|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Fin prévue des travaux</th><td>{{ immeuble.date_prev_fin_travaux|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Délai de livraison</th><td>{{ immeuble.delai_livraison|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Poste existant</th><td>{% if immeuble.poste_existant is True %}Oui{% elif immeuble.poste_existant is False %}Non{% else %}—{% endif %}</td></tr>
+                        <tr><th class="text-muted">Montant BRA payé</th><td>{% if immeuble.montant_bra_paye %}{{ immeuble.montant_bra_paye }} FCFA{% else %}—{% endif %}</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Suivi commercial</h6></div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr><th class="text-muted" style="width:45%">Opérateur immobilier</th><td>{{ immeuble.operateur.nom|default:"—" }}</td></tr>
+                        <tr><th class="text-muted">Commercial (CCGC)</th><td>{% if immeuble.commercial and immeuble.commercial.profile %}{{ immeuble.commercial.profile.get_role_display }}{% else %}{{ immeuble.ccgc_nom|default:"—" }}{% endif %}</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Démarches administratives</h6></div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="font-weight-bold">CIE</h6>
+                    <table class="table table-sm">
+                        <tr><th class="text-muted" style="width:45%">Demande initiée</th><td>{% if cie %}{{ cie.demande_initiee|yesno:"Oui,Non" }}{% else %}—{% endif %}</td></tr>
+                        <tr><th class="text-muted">Type de demande</th><td>{% if cie %}{{ cie.get_type_demande_display|default:"—" }}{% else %}—{% endif %}</td></tr>
+                        <tr><th class="text-muted">Statut</th><td>{% if cie %}{{ cie.get_statut_display|default:"—" }}{% else %}—{% endif %}</td></tr>
+                        <tr><th class="text-muted">N° de demande</th><td>{% if cie %}{{ cie.numero_demande|default:"—" }}{% else %}—{% endif %}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="font-weight-bold">SODECI</h6>
+                    <table class="table table-sm">
+                        <tr><th class="text-muted" style="width:45%">Demande initiée</th><td>{% if sodeci %}{{ sodeci.demande_initiee|yesno:"Oui,Non" }}{% else %}—{% endif %}</td></tr>
+                        <tr><th class="text-muted">Type de demande</th><td>{% if sodeci %}{{ sodeci.get_type_demande_display|default:"—" }}{% else %}—{% endif %}</td></tr>
+                        <tr><th class="text-muted">Statut</th><td>{% if sodeci %}{{ sodeci.get_statut_display|default:"—" }}{% else %}—{% endif %}</td></tr>
+                        <tr><th class="text-muted">N° de demande</th><td>{% if sodeci %}{{ sodeci.numero_demande|default:"—" }}{% else %}—{% endif %}</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if immeuble.observations %}
+        <div class="card mb-4">
+            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Observations</h6></div>
+            <div class="card-body"><p class="mb-0">{{ immeuble.observations|linebreaksbr }}</p></div>
+        </div>
+    {% endif %}
+{% endblock %}

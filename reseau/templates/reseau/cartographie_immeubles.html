@@ -1,0 +1,78 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Cartographie immeubles × contraintes réseau{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-map-marked-alt mr-2 text-primary"></i>Immeubles prospectés × contraintes réseau</h1>
+        <a href="{% url 'reseau:dashboard' %}" class="btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm mr-1"></i>Tableau de bord réseau
+        </a>
+    </div>
+
+    <p class="text-gray-600">
+        Croisement demandé par le Guichet Unique : la répartition par DR des immeubles prospectés (cible R+5 et plus),
+        mise en regard des incidents et de l'énergie non distribuée déjà constatés sur la même DR — pour identifier
+        les zones où le réseau est sous tension et anticiper, avant le dépôt d'une demande, l'obligation pour le
+        promoteur de prévoir son propre poste de transformation.
+    </p>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>DR</th>
+                            <th class="text-right">Immeubles prospectés</th>
+                            <th class="text-right">Cibles R+5 et +</th>
+                            <th class="text-right">Sans poste prévu</th>
+                            <th class="text-right">Incidents réseau</th>
+                            <th class="text-right">Énergie non distribuée (MWh)</th>
+                            <th>Alerte</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for l in lignes %}
+                            <tr class="{% if l.a_risque %}table-danger{% endif %}">
+                                <td>{{ l.dr.code }} — {{ l.dr.libelle }}</td>
+                                <td class="text-right">{{ l.nb_immeubles }}</td>
+                                <td class="text-right">{{ l.nb_prioritaires }}</td>
+                                <td class="text-right">{{ l.nb_sans_poste }}</td>
+                                <td class="text-right">{{ l.nb_incidents }}</td>
+                                <td class="text-right">{{ l.energie_non_distribuee|floatformat:1 }}</td>
+                                <td>
+                                    {% if l.a_risque %}
+                                        <span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Réseau contraint</span>
+                                    {% else %}<span class="text-muted">—</span>{% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-danger">Immeubles à régulariser en priorité (R+5 et +, sans poste, DR à réseau contraint)</h6></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead><tr><th>Structure</th><th>DR</th><th>Hauteur</th><th>Zone</th><th>Stade</th></tr></thead>
+                    <tbody>
+                        {% for im in immeubles_a_risque %}
+                            <tr>
+                                <td>{{ im.nom_structure }}</td>
+                                <td>{{ im.direction_regionale.code }}</td>
+                                <td>R+{{ im.nb_niveaux }}</td>
+                                <td>{{ im.zone_prospection|default:"—" }}</td>
+                                <td>{{ im.get_stade_avancement_display|default:"—" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted">Aucun immeuble à risque identifié.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

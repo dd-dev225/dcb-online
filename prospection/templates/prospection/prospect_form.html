@@ -1,0 +1,203 @@
+{% extends "dashboards/base.html" %}
+{% block title %}{% if immeuble %}Modifier{% else %}Nouveau{% endif %} prospect : Guichet Unique{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-clipboard-list mr-2 text-primary"></i>
+            {% if immeuble %}Modifier « {{ immeuble.nom_structure }} »{% else %}Fiche de prospection{% endif %}
+        </h1>
+        <a href="{% url 'prospection:liste_prospects' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm mr-1"></i>Retour à la liste
+        </a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Pas de .shadow ici (seule cette 1re carte, directement sous le titre) :
+             son flou (1.75rem, cf. cie-admin-2.min.css) "bave" visiblement dans
+             l'espace vide entre le titre et la carte, faute d'autre contenu pour
+             l'absorber visuellement (retour utilisateur explicite). -->
+        <div class="card mb-4">
+            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">I. Cible & contact</h6></div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label>{{ form_immeuble.date_visite.label }}</label>
+                        {{ form_immeuble.date_visite }}
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>{{ form_immeuble.nom_structure.label }} *</label>
+                        {{ form_immeuble.nom_structure }}
+                    </div>
+                    <div class="form-group col-md-5">
+                        <label>{{ form_immeuble.type_cible.label }}</label>
+                        {{ form_immeuble.type_cible }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>{{ form_immeuble.constructeur.label }}</label>
+                        {{ form_immeuble.constructeur }}
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>{{ form_immeuble.interlocuteur.label }}</label>
+                        {{ form_immeuble.interlocuteur }}
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>{{ form_immeuble.fonction_interlocuteur.label }}</label>
+                        {{ form_immeuble.fonction_interlocuteur }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>{{ form_immeuble.contact.label }}</label>
+                        {{ form_immeuble.contact }}
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>{{ form_immeuble.email.label }}</label>
+                        {{ form_immeuble.email }}
+                    </div>
+                    {% if form_immeuble.commercial %}
+                        <div class="form-group col-md-4">
+                            <label>{{ form_immeuble.commercial.label }}</label>
+                            {{ form_immeuble.commercial }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">II. Localisation & projet</h6></div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>{{ form_immeuble.situation_geographique.label }}</label>
+                        {{ form_immeuble.situation_geographique }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>{{ form_immeuble.zone_prospection.label }}</label>
+                        {{ form_immeuble.zone_prospection }}
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>{{ form_immeuble.dex.label }}</label>
+                        {{ form_immeuble.dex }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>{{ form_immeuble.direction_regionale.label }}</label>
+                        {{ form_immeuble.direction_regionale }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label>{{ form_immeuble.type_construction.label }}</label>
+                        {{ form_immeuble.type_construction }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>{{ form_immeuble.nb_niveaux.label }}</label>
+                        {{ form_immeuble.nb_niveaux }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>{{ form_immeuble.nb_appartements_bureaux.label }}</label>
+                        {{ form_immeuble.nb_appartements_bureaux }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>{{ form_immeuble.poste_existant.label }}</label>
+                        {{ form_immeuble.poste_existant }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label>{{ form_immeuble.stade_avancement.label }}</label>
+                        {{ form_immeuble.stade_avancement }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>{{ form_immeuble.date_debut_travaux.label }}</label>
+                        {{ form_immeuble.date_debut_travaux }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>{{ form_immeuble.date_prev_fin_travaux.label }}</label>
+                        {{ form_immeuble.date_prev_fin_travaux }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label>{{ form_immeuble.delai_livraison.label }}</label>
+                        {{ form_immeuble.delai_livraison }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>{{ form_immeuble.details_construction.label }}</label>
+                    {{ form_immeuble.details_construction }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form_immeuble.observations.label }}</label>
+                    {{ form_immeuble.observations }}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 col-md-6">
+                <div class="card shadow mb-4 h-100">
+                    <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">III.A Démarches CIE</h6></div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>{{ form_cie.demande_initiee.label }}</label>
+                            {{ form_cie.demande_initiee }}
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>{{ form_cie.type_demande.label }}</label>
+                                {{ form_cie.type_demande }}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>{{ form_cie.statut.label }}</label>
+                                {{ form_cie.statut }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ form_cie.numero_demande.label }}</label>
+                            {{ form_cie.numero_demande }}
+                        </div>
+                        <div class="form-group">
+                            <label>{{ form_cie.details_non_conformite.label }}</label>
+                            {{ form_cie.details_non_conformite }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="card shadow mb-4 h-100">
+                    <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">III.B Démarches SODECI</h6></div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>{{ form_sodeci.demande_initiee.label }}</label>
+                            {{ form_sodeci.demande_initiee }}
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>{{ form_sodeci.type_demande.label }}</label>
+                                {{ form_sodeci.type_demande }}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>{{ form_sodeci.statut.label }}</label>
+                                {{ form_sodeci.statut }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ form_sodeci.numero_demande.label }}</label>
+                            {{ form_sodeci.numero_demande }}
+                        </div>
+                        <div class="form-group">
+                            <label>{{ form_sodeci.details_non_conformite.label }}</label>
+                            {{ form_sodeci.details_non_conformite }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary mb-4"><i class="fas fa-save mr-1"></i>
+            {% if immeuble %}Enregistrer les modifications{% else %}Enregistrer le prospect{% endif %}
+        </button>
+    </form>
+{% endblock %}

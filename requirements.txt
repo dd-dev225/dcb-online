@@ -1,0 +1,8 @@
+Django==6.0.6
+django-environ==0.14.0
+django-plotly-dash==2.5.1
+dash==4.3.0
+dash-bootstrap-components==2.0.4
+dpd_components==0.2.0
+plotly==6.8.0
+channels==4.3.2

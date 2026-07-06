@@ -1,0 +1,47 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Messages envoyés{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-paper-plane mr-2 text-primary"></i>Messages envoyés</h1>
+        <div>
+            <a href="{% url 'messagerie:exporter_envoi' %}" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm">
+                <i class="fas fa-file-excel fa-sm mr-1"></i>Exporter
+            </a>
+            <a href="{% url 'messagerie:boite_reception' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+                <i class="fas fa-inbox fa-sm mr-1"></i>Messages reçus
+            </a>
+            <a href="{% url 'messagerie:nouveau_message' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm mr-1"></i>Nouveau message
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-sortable">
+                    <thead>
+                        <tr>
+                            <th>Vers</th>
+                            <th>Message</th>
+                            <th>Envoyé</th>
+                            <th>Par</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for message in messages_envoyes %}
+                            <tr>
+                                <td>{{ message.entite_destinataire }}</td>
+                                <td class="text-truncate" style="max-width: 400px;">{{ message.contenu }}</td>
+                                <td>{{ message.envoye_le|date:"d/m/Y H:i" }}</td>
+                                <td>{{ message.expediteur.get_full_name|default:message.expediteur.username }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted">Aucun message envoyé.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

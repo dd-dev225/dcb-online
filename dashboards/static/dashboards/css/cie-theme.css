@@ -1,0 +1,227 @@
+/* Ajustements légers par-dessus cie-admin-2.min.css (déjà recoloré en orange/vert CIE
+   par remplacement global des couleurs primary/success de SB Admin 2, cf. note dans
+   le repo). Ce fichier ne contient que ce que le remplacement global ne couvrait pas. */
+
+/* La hauteur/le padding par défaut de .sidebar-brand (SB Admin 2) sont pensés pour un
+   petit icône + texte ; on les assouplit pour laisser respirer un gros logo seul. */
+.sidebar-brand {
+    height: auto !important;
+    padding: 1.25rem 0.5rem !important;
+}
+
+/* Le logo on_line.png n'est pas prévu pour un fond coloré : on le pose toujours sur
+   une pastille blanche, ici comme partout ailleurs où il apparaît. */
+.sidebar-brand-logo {
+    width: 5rem;
+    height: 5rem;
+    max-width: 5rem;
+    max-height: 5rem;
+    border-radius: 50%;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.sidebar-brand-logo img {
+    width: 92% !important;
+    height: 92% !important;
+    max-width: 92%;
+    max-height: 92%;
+    object-fit: contain;
+}
+
+/* La SVG/PNG n'a pas d'override dédié dans cie-admin-2.min.css pour l'état "sidebar
+   réduite" (qui ne connaît que .sidebar-brand-icon, une balise <i>). On fixe donc
+   nous-mêmes une taille raisonnable dans cet état pour éviter tout débordement. */
+.sidebar.toggled .sidebar-brand-logo {
+    width: 3.2rem;
+    height: 3.2rem;
+    max-width: 3.2rem;
+    max-height: 3.2rem;
+    margin: 0 auto;
+}
+
+.sidebar .sidebar-heading {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.sidebar .nav-item .nav-link {
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.sidebar .nav-item.active .nav-link,
+.sidebar .nav-item .nav-link:hover {
+    color: #fff;
+    font-weight: 700;
+}
+
+/* SB Admin 2 pose un gris très clair (#f8f9fc) derrière les cartes blanches,
+   visible comme une bande grise entre la topbar et la première carte (retour
+   utilisateur explicite : "il n'y a pas le truc blanc en bas qui contient tout
+   le contenu"). La vraie règle est "#wrapper #content-wrapper" (deux sélecteurs
+   ID, cf. cie-admin-2.min.css) : un simple "#content-wrapper" ici perdait la
+   bataille de spécificité CSS malgré l'ordre de chargement, sans erreur visible.
+   Il faut reprendre EXACTEMENT le même sélecteur composé pour gagner. */
+body,
+#wrapper #content-wrapper {
+    background-color: #fff;
+}
+
+/* #content-wrapper a overflow-x:hidden dans cie-admin-2.min.css (protège la page
+   d'un débordement horizontal). Mais TOUT ancêtre avec un overflow != visible,
+   même sur un seul axe, casse le calcul de position:sticky pour tous ses
+   descendants (vérifié : nos en-têtes de tableau restaient bloqués à cause de ce
+   seul ancêtre, même avec leur propre conteneur défilant). On déplace donc cette
+   protection sur <body>, qui n'a aucun sticky descendant à perturber. */
+#wrapper #content-wrapper {
+    overflow-x: visible;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+/* Liseré orange sous la topbar, façon "Mon CIE en ligne" (référence utilisateur). */
+.topbar {
+    border-bottom: 4px solid #F7941E;
+}
+
+/* SB Admin 2 (version gratuite) ne fixe pas la sidebar/topbar par défaut : tout
+   #wrapper défile avec la page. On les rend fixes nous-mêmes. Le JS du thème gère
+   déjà le défilement à la molette DANS la sidebar via la classe "fixed-nav" posée
+   sur <body> (cf. sb-admin-2.min.js), seul le CSS correspondant manquait. */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 1031;
+}
+
+#content-wrapper {
+    margin-left: 6.5rem; /* largeur de la sidebar réduite (mobile/tablette) */
+    min-height: 100vh;
+}
+
+@media (min-width: 768px) {
+    #content-wrapper {
+        margin-left: 14rem; /* largeur de la sidebar dépliée, cf. media query SB Admin 2 */
+    }
+}
+
+body.sidebar-toggled #content-wrapper {
+    margin-left: 6.5rem;
+}
+
+/* La topbar doit rester visible sur TOUTE la hauteur de la page (pas seulement
+   dans un conteneur local comme .table-responsive plus bas dans ce fichier), donc
+   position:fixed reste le bon choix ici, alignée à droite de la sidebar, avec un
+   padding-top sur #content pour compenser. */
+.topbar {
+    position: fixed;
+    top: 0;
+    left: 6.5rem;
+    right: 0;
+    z-index: 1030;
+}
+
+@media (min-width: 768px) {
+    .topbar {
+        left: 14rem;
+    }
+}
+
+body.sidebar-toggled .topbar {
+    left: 6.5rem;
+}
+
+#content {
+    padding-top: 4.7rem; /* hauteur de .topbar (4.375rem) + sa bordure (4px) */
+}
+
+/* Boutons d'action des en-têtes de page (motif répété partout : "d-none
+   d-sm-inline-block btn ..." à côté du titre h1). Sans marge, une deuxième ligne
+   de boutons (dès qu'il y en a 4-5 et que la fenêtre est étroite) se collait
+   directement à la première (retour utilisateur, capture à l'appui). Le
+   sélecteur combine volontairement .d-sm-inline-block ET .btn : il ne cible donc
+   que ces boutons d'en-tête, jamais un autre usage de .d-sm-inline-block seul. */
+.d-sm-inline-block.btn {
+    margin-bottom: 0.5rem;
+}
+
+/* Boutons d'accès Performance/Engagement/Prospection de la page d'accueil : plus
+   visibles qu'un simple lien texte, sans les déplacer dans la topbar. Effet de
+   survol/animation retiré à la demande de l'utilisateur : aspect statique. */
+.btn-acces-detail {
+    padding: 0.85rem 1.5rem;
+    font-weight: 700;
+    border-radius: 0.5rem;
+}
+
+/* En-tête de tableau fixe pendant le défilement (demande utilisateur). Pas de
+   position:sticky simple ici : #content-wrapper a overflow-x:hidden plus haut
+   dans l'arbre (cf. plus haut dans ce fichier), ce qui casse le calcul de sticky
+   pour tout descendant qui dépend du défilement de la page elle-même. On donne
+   donc à .table-responsive son PROPRE défilement interne (max-height +
+   overflow-y:auto) : le sticky redevient fiable car il se calcule alors par
+   rapport à ce conteneur, plus proche, plutôt que par rapport à la page. */
+.table-responsive {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* border-collapse:separate (au lieu du "collapse" de Bootstrap) : indispensable
+   avec position:sticky. En mode "collapse", les bordures des cellules (dont la
+   bordure orange des lignes prioritaires .table-warning) sont partagées et se
+   "collent" à l'en-tête sticky, laissant apparaître un fin liseré orange au-dessus
+   de l'en-tête pendant le défilement (retour utilisateur). En "separate", chaque
+   cellule garde sa bordure, l'en-tête sticky masque totalement les lignes qui
+   défilent dessous, et le liseré disparaît. On recrée les séparateurs de lignes
+   de Bootstrap (bordure basse 1px) pour garder le même rendu. */
+.table-responsive table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-responsive table th,
+.table-responsive table td {
+    border-top: 0;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.table-sortable thead th,
+.table-responsive table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background-color: #fff;
+    background-clip: padding-box;
+    border-bottom: 2px solid #e3e6f0;
+}
+
+.th-sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.th-sortable::after {
+    content: "\25B4\25BE";
+    opacity: 0.3;
+    margin-left: 0.4rem;
+    font-size: 0.65rem;
+    letter-spacing: -0.2rem;
+}
+
+.th-sortable.tri-asc::after {
+    content: "\25B4";
+    opacity: 1;
+}
+
+.th-sortable.tri-desc::after {
+    content: "\25BE";
+    opacity: 1;
+}

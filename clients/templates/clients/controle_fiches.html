@@ -1,0 +1,114 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Contrôle des fiches{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-clipboard-check mr-2 text-primary"></i>Contrôle des fiches</h1>
+        <div>
+            <a href="{% url 'clients:liste_portefeuille' %}" class="btn btn-sm btn-secondary shadow-sm">
+                <i class="fas fa-address-book fa-sm mr-1"></i>Portefeuille
+            </a>
+            <a href="{% url 'clients:exporter_portefeuille' %}" class="btn btn-sm btn-success shadow-sm">
+                <i class="fas fa-file-excel fa-sm mr-1"></i>Exporter le résultat
+            </a>
+        </div>
+    </div>
+
+    <!-- Synthèse pour la SDRCB : taux de complétion et de contrôle du périmètre. -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card border-left-primary shadow py-2 mb-4"><div class="card-body">
+                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Clients du périmètre</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-info shadow py-2 mb-4"><div class="card-body">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Fiches complétées</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.completes }} <span class="small text-gray-500">({{ stats.taux_completion|floatformat:0 }}%)</span></div>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-success shadow py-2 mb-4"><div class="card-body">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Fiches contrôlées</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.controlees }} <span class="small text-gray-500">({{ stats.taux_controle|floatformat:0 }}%)</span></div>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-warning shadow py-2 mb-4"><div class="card-body">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">À contrôler</div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.a_controler }}</div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="mb-3">
+                <a href="?" class="btn btn-sm {% if not filtre %}btn-primary{% else %}btn-outline-primary{% endif %}">Tous</a>
+                <a href="?filtre=a_controler" class="btn btn-sm {% if filtre == 'a_controler' %}btn-warning{% else %}btn-outline-warning{% endif %}">À contrôler</a>
+                <a href="?filtre=completes" class="btn btn-sm {% if filtre == 'completes' %}btn-info{% else %}btn-outline-info{% endif %}">Complétées</a>
+                <a href="?filtre=controlees" class="btn btn-sm {% if filtre == 'controlees' %}btn-success{% else %}btn-outline-success{% endif %}">Contrôlées</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sortable">
+                    <thead>
+                        <tr>
+                            <th>IDABON</th>
+                            <th>Nom / Raison sociale</th>
+                            <th>DR</th>
+                            <th>Complétion</th>
+                            <th>Dernière MAJ</th>
+                            <th>Contrôle</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ligne in clients %}
+                            <tr>
+                                <td>{{ ligne.client.idabon }}</td>
+                                <td>{{ ligne.client.nom_prenoms|default:"—" }}</td>
+                                <td>{{ ligne.client.direction_regionale.code|default:"—" }}</td>
+                                <td>{{ ligne.completion }}</td>
+                                <td>
+                                    {% if ligne.client.fiche_maj_le %}
+                                        {{ ligne.client.fiche_maj_le|date:"d/m/Y" }}
+                                        <span class="small text-gray-500">{{ ligne.client.fiche_maj_par.username|default:"" }}</span>
+                                    {% else %}<span class="text-muted">—</span>{% endif %}
+                                </td>
+                                <td>
+                                    {% if ligne.client.fiche_controlee %}
+                                        <span class="badge badge-success">Contrôlée</span>
+                                        <span class="small text-gray-500 d-block">{{ ligne.client.fiche_controlee_le|date:"d/m/Y" }}</span>
+                                    {% elif ligne.client.fiche_maj_le %}
+                                        <span class="badge badge-warning">À contrôler</span>
+                                    {% else %}
+                                        <span class="badge badge-light">Non complétée</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-right text-nowrap">
+                                    <a href="{% url 'clients:fiche_client' ligne.client.idabon %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a>
+                                    {% if not ligne.client.fiche_controlee and ligne.client.fiche_maj_le %}
+                                        <form method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="controler" value="{{ ligne.client.idabon }}">
+                                            <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check"></i> Valider</button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="7" class="text-center text-muted">Aucune fiche.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if page_obj.paginator.num_pages > 1 %}
+                <nav><ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&filtre={{ filtre }}">Précédent</a></li>{% endif %}
+                    <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&filtre={{ filtre }}">Suivant</a></li>{% endif %}
+                </ul></nav>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

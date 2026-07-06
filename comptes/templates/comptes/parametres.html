@@ -1,0 +1,33 @@
+{% extends "dashboards/base.html" %}
+{% block title %}Mes paramètres{% endblock %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800"><i class="fas fa-sliders-h mr-2 text-primary"></i>Mes paramètres</h1>
+        <a href="{% url 'comptes:profile' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-user-circle fa-sm mr-1"></i>Mon profil
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header py-3"><h6 class="m-0 font-weight-bold text-primary">Mon périmètre</h6></div>
+        <div class="card-body">
+            <p class="text-gray-600">
+                Cochez les Directions Régionales que vous couvrez. Cette information sert de référence
+                (fiche, organigramme) ; elle ne change pas automatiquement la liste de vos clients, qui reste
+                celle qui vous est directement affectée.
+            </p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-row">
+                    {% for checkbox in form.directions_regionales %}
+                        <div class="form-check col-md-3 mb-2">
+                            {{ checkbox.tag }}
+                            <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Enregistrer</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

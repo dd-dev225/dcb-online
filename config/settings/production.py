@@ -25,6 +25,20 @@ DATABASES = {
     'default': env.db('DATABASE_URL'),
 }
 
+# Mêmes réglages qu'en dev (cf. local.py) : indispensables avec SQLite, sans quoi
+# django-plotly-dash reproduit les erreurs "database is locked" déjà rencontrées.
+if DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+    DATABASES['default'].setdefault('OPTIONS', {})
+    DATABASES['default']['OPTIONS'].update({
+        'timeout': 20,
+        'transaction_mode': 'IMMEDIATE',
+        'init_command': (
+            'PRAGMA journal_mode=WAL;'
+            'PRAGMA synchronous=NORMAL;'
+            'PRAGMA busy_timeout=20000;'
+        ),
+    })
+
 # Alias optionnel pour la bascule "scénario A" (lecture directe des vues Saphir/BDSTAT).
 if env('SAPHIR_READONLY_URL', default=''):
     DATABASES['saphir_readonly'] = env.db('SAPHIR_READONLY_URL')

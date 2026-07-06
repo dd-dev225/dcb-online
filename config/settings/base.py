@@ -133,6 +133,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Fichiers uploadés par les utilisateurs (photo de profil) : distinct des statiques
 # de l'app, qui sont versionnés/déployés avec le code.
